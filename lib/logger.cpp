@@ -163,15 +163,27 @@ void CLogger::WriteV (const char *pSource, TLogSeverity Severity, const char *pM
 			(*m_pPanicHandler) ();
 		}
 
-#ifndef USE_RPI_STUB_AT
-#ifndef ARM_ALLOW_MULTI_CORE
-		halt ();
-#else
-		CMultiCoreSupport::HaltAll ();
-#endif
-#else
-		Breakpoint (0);
-#endif
+#ifndef PRH_MODS
+	// When using a CSerialDevice with Logger, halting the
+	// processor here stops the serial output before you
+	// get a chance to see the assert that is causing the
+	// panic. Without these calls, the CPU(s) continue(s) to
+	// run, which might cause other catastrophic problems,
+	// I suppose, but at least I can see the assert that
+	// caused the panic, and often a few more asserts (or
+	// even the best case that the program continues to work)
+	
+	#ifndef USE_RPI_STUB_AT
+	#ifndef ARM_ALLOW_MULTI_CORE
+			halt ();
+	#else
+			CMultiCoreSupport::HaltAll ();
+	#endif
+	#else
+			Breakpoint (0);
+	#endif
+	
+#endif	// !PRH_MODS
 
 	}
 }
