@@ -23,9 +23,17 @@ CIRCLEHOME ?= ..
 -include $(CIRCLEHOME)/Config.mk
 -include $(CIRCLEHOME)/Config2.mk	# is not overwritten by "configure"
 
+# prh - personal defines and includes
+
+DEFINE += -DPRH_MODS -DPLUS3B
+INCLUDE	+=  -I $(CIRCLEHOME)/_prh
+
+# prh - changed RASPI from 1 and PREFIX from arm-eabi-
+
+
 AARCH	 ?= 32
-RASPPI	 ?= 1
-PREFIX	 ?= arm-eabi-
+RASPPI	 ?= 2
+PREFIX	 ?= arm-none-eabi-
 PREFIX64 ?= aarch64-elf-
 
 # see: doc/stdlib-support.txt
