@@ -77,12 +77,20 @@ boolean CBTHCILayer::Initialize (void)
 
 	if (m_pHCITransportUSB != 0)
 	{
-		m_pHCITransportUSB->RegisterHCIEventHandler (EventStub);
+		#ifdef PRH_MODS
+			m_pHCITransportUSB->registerPacketHandler (this, EventStub);
+		#else
+			m_pHCITransportUSB->RegisterHCIEventHandler (EventStub);
+		#endif
 	}
 	else
 	{
 		assert (m_pHCITransportUART != 0);
-		m_pHCITransportUART->RegisterHCIEventHandler (EventStub);
+		#ifdef PRH_MODS
+			m_pHCITransportUART->RegisterHCIEventHandler (this,EventStub);
+		#else
+			m_pHCITransportUART->RegisterHCIEventHandler (EventStub);
+		#endif
 	}
 
 	return m_DeviceManager.Initialize ();
@@ -156,10 +164,21 @@ CBTDeviceManager *CBTHCILayer::GetDeviceManager (void)
 	return &m_DeviceManager;
 }
 
-void CBTHCILayer::EventHandler (const void *pBuffer, unsigned nLength)
+
+#ifdef PRH_MODS
+	void CBTHCILayer::EventHandler (u8 hci_prefix, const void *pBuffer, unsigned nLength)
+		// pHCILayer provided for compilability only.
+		// This method is not used in my implementation.
+#else
+	void CBTHCILayer::EventHandler (const void *pBuffer, unsigned nLength)
+#endif
 {
 	assert (pBuffer != 0);
 	assert (nLength > 0);
+	#ifdef PRH_MODS
+		assert(hci_prefix == 0x04);	// HCI_PACKET_EVENT
+			// this routine only built to handle hci events (not data)
+	#endif
 
 	if (m_nEventFragmentOffset == 0)
 	{
@@ -202,8 +221,18 @@ void CBTHCILayer::EventHandler (const void *pBuffer, unsigned nLength)
 	m_nEventFragmentOffset = 0;
 }
 
-void CBTHCILayer::EventStub (const void *pBuffer, unsigned nLength)
+
+#ifdef PRH_MODS
+	void CBTHCILayer::EventStub (void *pHCILayer, u8 hci_prefix, const void *pBuffer, unsigned nLength)
+#else
+	void CBTHCILayer::EventStub (const void *pBuffer, unsigned nLength)
+#endif
 {
 	assert (s_pThis != 0);
-	s_pThis->EventHandler (pBuffer, nLength);
+	#ifdef PRH_MODS
+		assert(((CBTHCILayer *)pHCILayer) == s_pThis);
+		s_pThis->EventHandler (hci_prefix, pBuffer, nLength);
+	#else
+		s_pThis->EventHandler (pBuffer, nLength);
+	#endif
 }

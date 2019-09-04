@@ -24,9 +24,14 @@
 #include <circle/string.h>
 #include <assert.h>
 
+
 static const char FromBluetooth[] = "btusb";
 
 unsigned CUSBBluetoothDevice::s_nDeviceNumber = 1;
+
+#ifdef PRH_MODS
+	#define SHOW_TRANSPORT_BYTES  0
+#endif
 
 CUSBBluetoothDevice::CUSBBluetoothDevice (CUSBFunction *pFunction)
 :	CUSBFunction (pFunction),
@@ -35,6 +40,10 @@ CUSBBluetoothDevice::CUSBBluetoothDevice (CUSBFunction *pFunction)
 	m_pEndpointBulkOut (0),
 	m_pURB (0),
 	m_pEventBuffer (0),
+#ifdef PRH_MODS
+	m_pDataBuffer (0),
+	m_pDataURB (0),
+#endif
 	m_pEventHandler (0)
 {
 }
@@ -45,6 +54,11 @@ CUSBBluetoothDevice::~CUSBBluetoothDevice (void)
 
 	delete [] m_pEventBuffer;
 	m_pEventBuffer = 0;
+	
+	#ifdef PRH_MODS
+		delete [] m_pDataBuffer;
+		m_pDataBuffer = 0;
+	#endif
 	
 	delete m_pEndpointBulkOut;
 	m_pEndpointBulkOut = 0;
@@ -86,6 +100,10 @@ boolean CUSBBluetoothDevice::Configure (void)
 					return FALSE;
 				}
 
+				#ifdef PRH_MODS
+					CLogger::Get()->Write(FromBluetooth, LogDebug, "bulk in endpoint == 0x%2x",pEndpointDesc->bEndpointAddress);
+				#endif
+				
 				m_pEndpointBulkIn = new CUSBEndpoint (GetDevice (), pEndpointDesc);
 			}
 			else							// Output
@@ -96,6 +114,10 @@ boolean CUSBBluetoothDevice::Configure (void)
 
 					return FALSE;
 				}
+
+				#ifdef PRH_MODS
+					CLogger::Get()->Write(FromBluetooth, LogDebug, "bulk out endpoint == 0x%2x",pEndpointDesc->bEndpointAddress);
+				#endif
 
 				m_pEndpointBulkOut = new CUSBEndpoint (GetDevice (), pEndpointDesc);
 			}
@@ -109,6 +131,10 @@ boolean CUSBBluetoothDevice::Configure (void)
 				return FALSE;
 			}
 
+				#ifdef PRH_MODS
+					CLogger::Get()->Write(FromBluetooth, LogDebug, "interrupt endpoint == 0x%2x",pEndpointDesc->bEndpointAddress);
+				#endif
+			
 			m_pEndpointInterrupt = new CUSBEndpoint (GetDevice (), pEndpointDesc);
 		}
 	}
@@ -132,15 +158,30 @@ boolean CUSBBluetoothDevice::Configure (void)
 	m_pEventBuffer = new u8[m_pEndpointInterrupt->GetMaxPacketSize ()];
 	assert (m_pEventBuffer != 0);
 
+    #ifdef PRH_MODS
+		m_pDataBuffer = new u8[m_pEndpointBulkIn->GetMaxPacketSize ()];
+		assert (m_pDataBuffer != 0);
+	#endif
+	
 	CString DeviceName;
 	DeviceName.Format ("ubt%u", s_nDeviceNumber++);
-	CDeviceNameService::Get ()->AddDevice (DeviceName, this, FALSE);
-
+	#ifdef PRH_MODS
+		CDeviceNameService::Get ()->AddDevice (DeviceName, (CDevice *) this, FALSE);
+	#else
+		CDeviceNameService::Get ()->AddDevice (DeviceName, this, FALSE);
+	#endif
+	
 	return TRUE;
 }
 
 boolean CUSBBluetoothDevice::SendHCICommand (const void *pBuffer, unsigned nLength)
 {
+	#ifdef PRH_MODS
+		#if SHOW_TRANSPORT_BYTES
+			display_bytes("<usb cmd ",(u8 *) pBuffer, nLength);
+		#endif
+	#endif
+
 	if (GetHost ()->ControlMessage (GetEndpoint0 (), REQUEST_OUT | REQUEST_CLASS | REQUEST_TO_DEVICE,
 					0, 0, 0, (void *) pBuffer, nLength) < 0)
 	{
@@ -150,13 +191,52 @@ boolean CUSBBluetoothDevice::SendHCICommand (const void *pBuffer, unsigned nLeng
 	return TRUE;
 }
 
-void CUSBBluetoothDevice::RegisterHCIEventHandler (TBTHCIEventHandler *pHandler)
-{
-	m_pEventHandler = pHandler;
-	assert (m_pEventHandler != 0);
 
-	StartRequest ();
-}
+#ifdef PRH_MODS
+
+	boolean CUSBBluetoothDevice::SendHCIData (const void *pBuffer, unsigned nLength)
+	{
+		#if SHOW_TRANSPORT_BYTES
+			display_bytes("<usb data",(u8 *) pBuffer, nLength);
+		#endif
+		
+		assert(m_pEndpointBulkOut);
+		if (((unsigned)GetHost ()->Transfer (m_pEndpointBulkOut, (void *) pBuffer, nLength)) != nLength)
+		{
+			return FALSE;
+		}
+	
+		return TRUE;
+	}
+
+	void CUSBBluetoothDevice::registerPacketHandler (void *pHCILayer, TBTHCIEventHandler *pHandler)
+	{
+		m_pHCILayer = pHCILayer;
+		m_pEventHandler = pHandler;
+		assert (m_pEventHandler != 0);
+	
+		StartRequest ();
+		#ifdef PRH_MODS
+			StartDataRequest();
+		#endif
+	}
+
+
+#else
+	
+	void CUSBBluetoothDevice::RegisterHCIEventHandler (TBTHCIEventHandler *pHandler)
+	{
+		m_pEventHandler = pHandler;
+		assert (m_pEventHandler != 0);
+	
+		StartRequest ();
+		#ifdef PRH_MODS
+			StartDataRequest();
+		#endif
+	}
+
+#endif
+
 
 boolean CUSBBluetoothDevice::StartRequest (void)
 {
@@ -182,7 +262,23 @@ void CUSBBluetoothDevice::CompletionRoutine (CUSBRequest *pURB)
 	if (pURB->GetStatus () != 0)
 	{
 		assert (m_pEventHandler != 0);
-		(*m_pEventHandler) (m_pEventBuffer, pURB->GetResultLength ());
+		
+		#ifdef PRH_MODS
+			// We are only getting HCI Event packets through this routine.
+			// I was kind of hoping my USB dongle had SDP, RFCOMM, and SPP
+			// built into it, but I still cannot create a serial port in
+			// Windows.  So now I am wondering how to get ACL data packets?
+			// We are using the interrupt endpoint ... perhaps we need an
+			// additional separate request for the bulk out endpoint.
+			
+			#if SHOW_TRANSPORT_BYTES
+				display_bytes("usb evt> ",(u8 *) m_pEventBuffer, pURB->GetResultLength ());
+			#endif
+			
+			(*m_pEventHandler) (m_pHCILayer, HCI_PREFIX_EVENT, m_pEventBuffer, pURB->GetResultLength ());
+		#else
+			(*m_pEventHandler) (m_pEventBuffer, pURB->GetResultLength ());
+		#endif
 	}
 	else
 	{
@@ -205,3 +301,62 @@ void CUSBBluetoothDevice::CompletionStub (CUSBRequest *pURB, void *pParam, void 
 	
 	pThis->CompletionRoutine (pURB);
 }
+
+
+
+
+#ifdef PRH_MODS
+
+	
+	boolean CUSBBluetoothDevice::StartDataRequest(void)
+	{
+		assert(m_pEndpointBulkIn != 0);
+		assert(m_pDataBuffer != 0);
+		assert(m_pDataURB == 0);
+		m_pDataURB = new CUSBRequest(
+			m_pEndpointBulkIn,
+			m_pDataBuffer,
+			m_pEndpointBulkIn->GetMaxPacketSize());
+		assert(m_pDataURB != 0);
+		m_pDataURB->SetCompleteOnNAK();
+		m_pDataURB->SetCompletionRoutine(DataCompletionStub, 0, this);
+		return GetHost()->SubmitAsyncRequest(m_pDataURB);
+	}
+	
+	
+	void CUSBBluetoothDevice::DataCompletionRoutine(CUSBRequest *pURB)
+	{
+		assert(pURB != 0);
+		assert(m_pDataURB == pURB);
+		
+		if (pURB->GetStatus () != 0 &&
+			pURB->GetResultLength())
+		{
+			assert(m_pDataBuffer != 0);
+			assert(m_pEventHandler != 0);
+
+			#if SHOW_TRANSPORT_BYTES
+				display_bytes("usb dat> ",(u8 *) m_pDataBuffer, pURB->GetResultLength());
+			#endif
+			
+			(*m_pEventHandler)(m_pHCILayer, HCI_PREFIX_DATA, m_pDataBuffer, pURB->GetResultLength());
+		}
+	
+		delete m_pDataURB;
+		m_pDataURB = 0;
+	
+		if (!StartDataRequest())
+			CLogger::Get()->Write(FromBluetooth, LogError, "Cannot restart data request");
+	}
+	
+	
+	void CUSBBluetoothDevice::DataCompletionStub(CUSBRequest *pURB, void *pParam, void *pContext)
+	{
+		CUSBBluetoothDevice *pThis = (CUSBBluetoothDevice *) pContext;
+		assert (pThis != 0);
+		pThis->DataCompletionRoutine(pURB);
+	}
+
+
+#endif	// PRH_MODS
+

@@ -37,7 +37,11 @@ public:
 
 	boolean SendHCICommand (const void *pBuffer, unsigned nLength);
 
-	void RegisterHCIEventHandler (TBTHCIEventHandler *pHandler);
+    #ifdef PRH_MODS
+        void RegisterHCIEventHandler (void *unused_pHCILayer, TBTHCIEventHandler *pHandler);
+    #else
+        void RegisterHCIEventHandler (TBTHCIEventHandler *pHandler);
+    #endif
 
 private:
 	void Write (u8 nChar);

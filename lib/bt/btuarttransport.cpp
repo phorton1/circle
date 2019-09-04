@@ -184,7 +184,11 @@ boolean CBTUARTTransport::SendHCICommand (const void *pBuffer, unsigned nLength)
 	return TRUE;
 }
 
-void CBTUARTTransport::RegisterHCIEventHandler (TBTHCIEventHandler *pHandler)
+#ifdef PRH_MODS
+	void CBTUARTTransport::RegisterHCIEventHandler (void *unused_pHCILayer, TBTHCIEventHandler *pHandler)
+#else
+	void CBTUARTTransport::RegisterHCIEventHandler (TBTHCIEventHandler *pHandler)
+#endif
 {
 	assert (m_pEventHandler == 0);
 	m_pEventHandler = pHandler;
@@ -248,7 +252,11 @@ void CBTUARTTransport::IRQHandler (void)
 			{
 				if (m_pEventHandler != 0)
 				{
-					(*m_pEventHandler) (m_RxBuffer, m_nRxInPtr);
+					#ifdef PRH_MODS
+						(*m_pEventHandler) (0, HCI_PACKET_EVENT, m_RxBuffer, m_nRxInPtr);
+					#else
+						(*m_pEventHandler) (m_RxBuffer, m_nRxInPtr);
+					#endif
 				}
 
 				m_nRxState = RxStateStart;
@@ -262,7 +270,11 @@ void CBTUARTTransport::IRQHandler (void)
 			{
 				if (m_pEventHandler != 0)
 				{
-					(*m_pEventHandler) (m_RxBuffer, m_nRxInPtr);
+					#ifdef PRH_MODS
+						(*m_pEventHandler) (0, HCI_PACKET_EVENT, m_RxBuffer, m_nRxInPtr);
+					#else
+						(*m_pEventHandler) (m_RxBuffer, m_nRxInPtr);
+					#endif
 				}
 
 				m_nRxState = RxStateStart;

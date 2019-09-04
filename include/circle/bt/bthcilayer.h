@@ -50,9 +50,14 @@ public:
 	CBTDeviceManager *GetDeviceManager (void);
 
 private:
-	void EventHandler (const void *pBuffer, unsigned nLength);
-	static void EventStub (const void *pBuffer, unsigned nLength);
-
+    
+    #ifdef PRH_MODS
+        void EventHandler (u8 hci_prefix, const void *pBuffer, unsigned nLength);
+        static void EventStub (void *pHCILayer, u8 hci_prefix, const void *pBuffer, unsigned nLength);
+    #else
+        void EventHandler (const void *pBuffer, unsigned nLength);
+        static void EventStub (const void *pBuffer, unsigned nLength);
+    #endif
 private:
 	CUSBBluetoothDevice *m_pHCITransportUSB;
 	CBTUARTTransport *m_pHCITransportUART;

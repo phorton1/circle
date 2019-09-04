@@ -27,6 +27,9 @@
 #include <circle/types.h>
 
 class CUSBBluetoothDevice : public CUSBFunction
+    #ifdef PRH_MODS
+        ,btTransportBase
+    #endif
 {
 public:
 	CUSBBluetoothDevice (CUSBFunction *pFunction);
@@ -35,8 +38,13 @@ public:
 	boolean Configure (void);
 
 	boolean SendHCICommand (const void *pBuffer, unsigned nLength);
+    #ifdef PRH_MODS
+    	boolean SendHCIData (const void *pBuffer, unsigned nLength);
+        void registerPacketHandler(void *pHCILayer, TBTHCIEventHandler *pHandler);
+    #else
+        void RegisterHCIEventHandler (TBTHCIEventHandler *pHandler);
+    #endif
 
-	void RegisterHCIEventHandler (TBTHCIEventHandler *pHandler);
 
 private:
 	boolean StartRequest (void);
@@ -51,8 +59,19 @@ private:
 
 	CUSBRequest *m_pURB;
 	u8 *m_pEventBuffer;
+    
+    #ifdef PRH_MODS
+        u8 *m_pDataBuffer;
+        CUSBRequest *m_pDataURB;
+        
+    	boolean StartDataRequest (void);
+        void DataCompletionRoutine (CUSBRequest *pURB);
+        static void DataCompletionStub (CUSBRequest *pURB, void *pParam, void *pContext);
+        
+        void *m_pHCILayer;
+    #endif
 
-	TBTHCIEventHandler *m_pEventHandler;
+    TBTHCIEventHandler *m_pEventHandler;
 
 	static unsigned s_nDeviceNumber;
 };
