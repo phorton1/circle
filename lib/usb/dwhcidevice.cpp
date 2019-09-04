@@ -1105,8 +1105,17 @@ void CDWHCIDevice::ChannelInterruptHandler (unsigned nChannel)
 		nStatus = pStageData->GetTransactionStatus ();
 		if (nStatus & DWHCI_HOST_CHAN_INT_ERROR_MASK)
 		{
+			#ifndef PRH_MODS
+				// this is called on every poll looking for IN data
+				// packets from the bluetooth control.  I probably
+				// need to add a flag to the URB saying "don't report
+				// DWHCI_HOST_CHAN_INT_ERROR_MASK or use some other
+				// strategy.  For now I am just commenting out the
+				// message.
+
 			CLogger::Get ()->Write (FromDWHCI, LogError,
 						"Transaction failed (status 0x%X)", nStatus);
+			#endif
 
 			pURB->SetStatus (0);
 
