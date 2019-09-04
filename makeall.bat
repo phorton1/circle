@@ -62,11 +62,6 @@ cd addon
     if %errorlevel% neq 0 exit /b %errorlevel%
     cd ..
     
-    cd ugui
-    make %1 %2
-    if %errorlevel% neq 0 exit /b %errorlevel%
-    cd ..
-    
     if %VHIQ_SOUND%==0 goto NO_VHIQ_SOUND
     
     cd linux
