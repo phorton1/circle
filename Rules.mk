@@ -40,19 +40,23 @@ AS	= $(CC)
 LD	= $(PREFIX)ld
 AR	= $(PREFIX)ar
 
+# prh addition to build other filenames
+TARGET_ROOT ?= kernel
+TARGET_SUFFIX ?= img
+
 ifeq ($(strip $(AARCH)),32)
 ifeq ($(strip $(RASPPI)),1)
 ARCH	?= -DAARCH=32 -march=armv6k -mtune=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=$(FLOAT_ABI)
-TARGET	?= kernel
+TARGET	?= $(TARGET_ROOT)
 else ifeq ($(strip $(RASPPI)),2)
 ARCH	?= -DAARCH=32 -march=armv7-a -marm -mfpu=neon-vfpv4 -mfloat-abi=$(FLOAT_ABI)
-TARGET	?= kernel7
+TARGET	?= $(TARGET_ROOT)7
 else ifeq ($(strip $(RASPPI)),3)
 ARCH	?= -DAARCH=32 -march=armv8-a -mtune=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=$(FLOAT_ABI)
-TARGET	?= kernel8-32
+TARGET	?= $(TARGET_ROOT)8-32
 else ifeq ($(strip $(RASPPI)),4)
 ARCH	?= -DAARCH=32 -march=armv8-a -mtune=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=$(FLOAT_ABI)
-TARGET	?= kernel7l
+TARGET	?= $(TARGET_ROOT)7l
 else
 $(error RASPPI must be set to 1, 2, 3 or 4)
 endif
@@ -60,10 +64,10 @@ LOADADDR = 0x8000
 else ifeq ($(strip $(AARCH)),64)
 ifeq ($(strip $(RASPPI)),3)
 ARCH	?= -DAARCH=64 -march=armv8-a -mtune=cortex-a53 -mlittle-endian -mcmodel=small
-TARGET	?= kernel8
+TARGET	?= $(TARGET_ROOT)8
 else ifeq ($(strip $(RASPPI)),4)
 ARCH	?= -DAARCH=64 -march=armv8-a -mtune=cortex-a72 -mlittle-endian -mcmodel=small
-TARGET	?= kernel8-rpi4
+TARGET	?= $(TARGET_ROOT)8-rpi4
 else
 $(error RASPPI must be set to 3 or 4)
 endif
@@ -80,12 +84,17 @@ $(error STDLIB_SUPPORT > 0 requires GNU make 4.0 or newer)
 endif
 endif
 
+# prh - added quotes around the EXTRALIBS assignments below because
+# it was barfing with windows library names with spaces in them:
+#	"c:/program files (x86)/gnu tools arm embedded/7
+#    2018-q2-update/bin/../lib/gcc/arm-none-eabi/7.3.1/hard/libgcc.a"
+
 ifeq ($(strip $(STDLIB_SUPPORT)),3)
 LIBSTDCPP != $(CPP) $(ARCH) -print-file-name=libstdc++.a
-EXTRALIBS += $(LIBSTDCPP)
+EXTRALIBS += "$(LIBSTDCPP)"
 LIBGCC_EH != $(CPP) $(ARCH) -print-file-name=libgcc_eh.a
 ifneq ($(strip $(LIBGCC_EH)),libgcc_eh.a)
-EXTRALIBS += $(LIBGCC_EH)
+EXTRALIBS += "$(LIBGCC_EH)"
 endif
 ifeq ($(strip $(AARCH)),64)
 CRTBEGIN != $(CPP) $(ARCH) -print-file-name=crtbegin.o
@@ -99,13 +108,13 @@ ifeq ($(strip $(STDLIB_SUPPORT)),0)
 CFLAGS	  += -nostdinc
 else
 LIBGCC	  != $(CPP) $(ARCH) -print-file-name=libgcc.a
-EXTRALIBS += $(LIBGCC)
+EXTRALIBS += "$(LIBGCC)"
 endif
 
 ifeq ($(strip $(STDLIB_SUPPORT)),1)
 LIBM	  != $(CPP) $(ARCH) -print-file-name=libm.a
 ifneq ($(strip $(LIBM)),libm.a)
-EXTRALIBS += $(LIBM)
+EXTRALIBS += "$(LIBM)"
 endif
 endif
 
