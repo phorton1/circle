@@ -149,17 +149,17 @@ CPPFLAGS+= $(CFLAGS) -std=c++14
 	@echo "  CPP   $@"
 	@$(CPP) $(CPPFLAGS) -c -o $@ $<
 
-$(TARGET).img: $(OBJS) $(LIBS) $(CIRCLEHOME)/circle.ld
+$(TARGET).$(TARGET_SUFFIX) : $(OBJS) $(LIBS) $(CIRCLEHOME)/circle.ld $(MAKE_LIBS)
 	@echo "  LD    $(TARGET).elf"
 	@$(LD) -o $(TARGET).elf -Map $(TARGET).map --section-start=.init=$(LOADADDR) \
 		-T $(CIRCLEHOME)/circle.ld $(CRTBEGIN) $(OBJS) \
 		--start-group $(LIBS) $(EXTRALIBS) --end-group $(CRTEND)
 	@echo "  DUMP  $(TARGET).lst"
 	@$(PREFIX)objdump -d $(TARGET).elf | $(PREFIX)c++filt > $(TARGET).lst
-	@echo "  COPY  $(TARGET).img"
-	@$(PREFIX)objcopy $(TARGET).elf -O binary $(TARGET).img
-	@echo -n "  WC    $(TARGET).img => "
-	@wc -c < $(TARGET).img
+	@echo "  COPY  $(TARGET).$(TARGET_SUFFIX)"
+	@$(PREFIX)objcopy $(TARGET).elf -O binary $(TARGET).$(TARGET_SUFFIX)
+	@echo -n "  WC    $(TARGET).$(TARGET_SUFFIX) => "
+	@wc -c < $(TARGET).$(TARGET_SUFFIX)
 
 clean:
 	rm -f *.o *.a *.elf *.lst *.img *.hex *.cir *.map *~ $(EXTRACLEAN)
