@@ -1,228 +1,112 @@
-Circle
-======
+My Fork of Circle
+=====================
 
-> If you read this file in an editor you should switch line wrapping on.
-
-Overview
---------
-
-Circle is a C++ bare metal programming environment for the Raspberry Pi. It should be usable on all existing models (tested on model A+, B, B+, on Raspberry Pi 2, 3, 4 and on Raspberry Pi Zero). It provides several ready-tested C++ classes which can be used to control different hardware features of the Raspberry Pi. Together with Circle there are delivered some samples which demonstrate the use of its classes. Circle can be used to create 32-bit or 64-bit bare metal applications.
-
-Circle includes bigger (optional) third-party C-libraries for specific purposes in addon/ now. This is the reason why GitHub rates the project as a C-language-project. The main Circle libraries are written in C++ using classes instead. That's why it is named a C++ programming environment.
-
-The 40th Step
--------------
-
-This Circle release adds support for the Raspberry Pi 4 Model B. All features supported by previous releases on Raspberry Pi 1-3 should work on Raspberry Pi 4 except:
-
-* Accelerated graphics support
-* FIQ on AArch64
-* User timer (class CUserTimer)
-* I2C slave (class CI2CSlave)
-* USB RescanDevices() and RemoveDevice()
-
-The Raspberry Pi 4 provides a number of new features. Not all of these are supported yet. Support for the following features is planned to be added later:
-
-* USB 3.0 hubs
-* High memory (over 1 GByte)
-* additional peripherals (SPI, I2C, UART)
-
-The Raspberry Pi 4 has a new xHCI USB host controller and a non-USB Gigabit Ethernet controller. This requires slight modifications to existing applications. The generic USB host controller class is named `CUSBHCIDevice` and has to be included from `<circle/usb/usbhcidevice.h>` now. The Ethernet controller driver is automatically loaded, if the TCP/IP network library is used, but has to be loaded manually otherwise (see *sample/06-ethernet*).
-
-Please note that there is a different behavior regarding headless operation on the Raspberry Pi 4 compared to earlier models, where the frame buffer initialization succeeds, even if there is no display connected. On the Raspberry Pi 4 there must be a display connected, the initialization of the class CBcmFrameBuffer (and following of the class CScreenDevice) will fail otherwise. Most of the Circle samples are not aware of this and may fail to run without a connected display. You have to modify CKernel::Initialize() for headless operation so that `m_Screen.Initialize()` is not called. `m_Serial` (or maybe class `CNullDevice`) can be used as logging target in this case.
-
-The options to be used for *cmdline.txt* are described in *doc/cmdline.txt*.
-
-Features
---------
-
-Circle supports the following features:
-
-| Group                 | Features                                            |
-|-----------------------|-----------------------------------------------------|
-| C++ build environment | AArch32 and AArch64 support                         |
-|                       | Basic library functions (e.g. new and delete)       |
-|                       | Enables all CPU caches using the MMU                |
-|                       | Interrupt support (IRQ and FIQ)                     |
-|                       | Multi-core support (Raspberry Pi 2, 3 and 4)        |
-|                       | Cooperative non-preemtive scheduler                 |
-|                       | CPU clock rate management                           |
-|                       |                                                     |
-| Debug support         | Kernel logging to screen, UART and/or syslog server |
-|                       | C-assertions with stack trace                       |
-|                       | Hardware exception handler with stack trace         |
-|                       | GDB support using rpi_stub (Raspberry Pi 2 and 3)   |
-|                       | Serial bootloader (by David Welch) included         |
-|                       | QEMU support                                        |
-|                       |                                                     |
-| SoC devices           | GPIO pins (with interrupt, Act LED) and clocks      |
-|                       | Frame buffer (screen driver with escape sequences)  |
-|                       | UART (Polling and interrupt driver)                 |
-|                       | System timer (with kernel timers)                   |
-|                       | Platform DMA controller                             |
-|                       | EMMC SD card interface driver                       |
-|                       | PWM output (2 channels)                             |
-|                       | PWM sound output (on headphone jack)                |
-|                       | I2C master and slave (slave not on Raspberry Pi 4)  |
-|                       | SPI0 master (Polling and DMA driver)                |
-|                       | SPI1 auxiliary master (Polling)                     |
-|                       | I2S sound output                                    |
-|                       | Hardware random number generator                    |
-|                       | Official Raspberry Pi touch screen                  |
-|                       | VCHIQ interface and audio service drivers           |
-|                       | BCM54213PE Gigabit Ethernet NIC of Raspberry Pi 4   |
-|                       |                                                     |
-| USB                   | Host controller interface (HCI) drivers             |
-|                       | Standard hub driver (USB 2.0 only)                  |
-|                       | HID class device drivers (keyboard, mouse, gamepad) |
-|                       | Driver for on-board Ethernet device (SMSC951x)      |
-|                       | Driver for on-board Ethernet device (LAN7800)       |
-|                       | Driver for USB mass storage devices (bulk only)     |
-|                       | Audio class MIDI input support                      |
-|                       | Printer driver                                      |
-|                       |                                                     |
-| File systems          | Internal FAT driver (limited function)              |
-|                       | FatFs driver (full function, by ChaN)               |
-|                       |                                                     |
-| TCP/IP networking     | Protocols: ARP, IP, ICMP, UDP, TCP                  |
-|                       | Clients: DHCP, DNS, NTP, HTTP, Syslog, MQTT         |
-|                       | Servers: HTTP, TFTP                                 |
-|                       | BSD-like C++ socket API                             |
-|                       |                                                     |
-| Graphics              | OpenGL ES 1.1 and 2.0, OpenVG 1.1, EGL 1.4          |
-|                       | (not on Raspberry Pi 4)                             |
-|                       | uGUI (by Achim Doebler)                             |
-|                       | LittlevGL GUI library (by Gabor Kiss-Vamosi)        |
-|                       |                                                     |
-| Bluetooth             | Device inquiry support only                         |
-| (deprecated)          | USB BR/EDR dongle driver                            |
-|                       | Internal controller of Raspberry Pi 3 B             |
-
-Building
---------
-
-> For building 64-bit applications (AArch64) see the next section.
-
-Building is normally done on PC Linux. If building for the Raspberry Pi 1 you need a [toolchain](http://elinux.org/Rpi_Software#ARM) for the ARM1176JZF core (with EABI support). For Raspberry Pi 2/3/4 you need a toolchain with Cortex-A7/-A53/-A72 support. A toolchain, which works for all of these, can be downloaded [here](https://developer.arm.com/open-source/gnu-toolchain/gnu-a/downloads). Circle has been tested with the version *8.2-2019.01* (gcc-arm-8.2-2019.01-x86_64-arm-eabi.tar.xz) from this website.
-
-First edit the file *Rules.mk* and set the Raspberry Pi version (*RASPPI*, 1, 2, 3 or 4) and the *PREFIX* of your toolchain commands. Alternatively you can create a *Config.mk* file (which is ignored by git) and set the Raspberry Pi version and the *PREFIX* variable to the prefix of your compiler like this (don't forget the dash at the end):
-
-`RASPPI = 1`  
-`PREFIX = arm-none-eabi-`
-
-The following table gives support for selecting the right *RASPPI* value:
-
-| RASPPI | Target         | Models                   | Optimized for |
-| ------ | -------------- | ------------------------ | ------------- |
-|      1 | kernel.img     | A, B, A+, B+, Zero, (CM) | ARM1176JZF-S  |
-|      2 | kernel7.img    | 2, 3, (CM3)              | ARMv7-A       |
-|      3 | kernel8-32.img | 3, (CM3)                 | Cortex-A53    |
-|      4 | kernel7l.img   | 4                        | Cortex-A72    |
-
-For a binary distribution you should do one build with *RASPPI = 1*, one with *RASPPI = 2* and one build with *RASPPI = 4* and include the created files *kernel.img*, *kernel7.img* and *kernel7l.img*. Optionally you can do a build with *RASPPI = 3* and add the created file *kernel8-32.img* to provide an optimized version for the Raspberry Pi 3.
-
-Then go to the build root of Circle and do:
-
-`./makeall clean`  
-`./makeall`
-
-By default only the latest sample (with the highest number) is build. The ready build *kernel.img* file should be in its subdirectory of sample/. If you want to build another sample after `makeall` go to its subdirectory and do `make`.
-
-You can also build Circle on the Raspberry Pi itself (set `PREFIX =` (empty)) on Raspbian but you need some method to put the *kernel.img* file onto the SD(HC) card. With an external USB card reader on model B+ or Raspberry Pi 2/3/4 model B (4 USB ports) this should be no problem.
-
-Building Circle from a non-Linux host is possible too. Maybe you have to adapt the shell scripts in this case. You need a cross compiler targetting (for example) *arm-none-eabi*. OSDev.org has an [excellent document on the subject](http://wiki.osdev.org/GCC_Cross-Compiler) that you can follow if you have no idea of what a cross compiler is, or how to make one.
-
-AArch64
+Version
 -------
 
-Circle supports building 64-bit applications, which can be run on the Raspberry Pi 3 or 4. There are also Raspberry Pi 2 versions, which are based on the BCM2837 SoC. These Raspberry Pi versions can be used too.
+This is a fork of the Circle is a C++ bare metal programming environment for the Raspberry Pi.
 
-The recommended toolchain to build 64-bit applications with Circle can be downloaded [here](https://developer.arm.com/open-source/gnu-toolchain/gnu-a/downloads). Circle has been tested with the version *8.2-2019.01* (gcc-arm-8.2-2019.01-x86_64-aarch64-elf.tar.xz) from this website.
+It is based on the stable verion 3.19 of Circle.  Changes to the core Circle source code have been minimized and carefully documented to allow for future updates to the Circle codebase, but otherwise, this is a completely detatched and separate fork of Circle.
 
-First edit the file *Rules.mk* and set the Raspberry Pi architecture (*AARCH*, 32 or 64) and the *PREFIX64* of your toolchain commands. The *RASPPI* variable has to be set to 3 or 4 for `AARCH = 64`. Alternatively you can create a *Config.mk* file (which is ignored by git) and set the Raspberry Pi architecture and the *PREFIX64* variable to the prefix of your compiler like this (don't forget the dash at the end):
+All code changes within existing Circle source files are bracketed by #ifdef PRH_MODS.
 
-```
-AARCH = 64
-RASPPI = 3
-PREFIX64 = aarch64-elf-
-```
+Changes to Rules.mk *should* be backwards compatible, so this Circle source *should* generally work with Linux and/or MacOS builds, but the changes are only tested in my Windows based develpment environment.
 
-Then go to the build root of Circle and do:
+Please see https://github.com/rsta2/circle for the original Circle source code.
 
-```
-./makeall clean
-./makeall
-```
+Please see the repository history for a complete list of the changes since the fork.
 
-By default only the latest sample (with the highest number) is build. The ready build *kernel8.img* or *kernel8-rpi4.img* file should be in its subdirectory of sample/. If you want to build another sample after `makeall` go to its subdirectory and do `make`.
 
-Installation
-------------
+Development Environment
+-----------------------
 
-Copy the Raspberry Pi firmware (from boot/ directory, do *make* there to get them) files along with the *kernel.img* (from sample/ subdirectory) to a SD(HC) card with FAT file system. Put the SD(HC) card into the Raspberry Pi.
+There is a Windows batch file in the root directory **makeall.bat** that merely changes to each interesting subdirectory and performs a "make" within that directory.  It builds the main Circle libraries, a subset of the addon libraries, and in my case, the prh/bootloader folder.  You may edit this file freely to build those parts of Circle and addons that you need.  Makeall.bat also accepts an argument of **clean** to remove build artifacts and do a clean build.
 
-The *config.txt* file, provided in the boot/ directory, is only needed to enable 64-bit mode on the Raspberry Pi 4 and has to be copied on the SD card in this case. It must not be on the SD card otherwise!
+The difficult part was getting the correct MinGW and GCC toolchain setup onto the Windows 10 machine. It is difficult for me to document accurately as I've had the same MinGW setup on my machine(s) for the last 10 years or so, since XP, and I have downloaded and installed a number of gcc toolchains over the years, in conjunction with Arduino, rPi, and Android devleopment evironments.
 
-Directories
------------
+I believe the following are all that is required to build on Windows:
 
-* include: The common header files, most class headers are in the include/circle/ subdirectory.
-* lib: The Circle class implementation and support files (other libraries are in subdirectories of lib/).
-* sample: Several sample applications using Circle in different subdirectories. The main function is implemented in the CKernel class.
-* addon: Contains contributed libraries and samples (has to be build manually).
-* app: Place your own applications here. If you have own libraries put them into app/lib/.
-* boot: Do *make* in this directory to get the Raspberry Pi firmware files required to boot.
-* doc: Additional documentation files.
-* tools: Some tools for using Circle more comfortable (e.g. a serial bootloader).
+* a version of **MinGW** with MSys
+* the arm-none-eabi **GCC toolchain** or equivilant
+* the latest version of **Make.exe** copied into the MinGW/MSys/1.0/bin directory
 
-Classes
+The latest version of **MinGW** *should* work.  You can generally find MinGW at http://www.mingw.org/ and I believe the latest version at https://osdn.net/projects/mingw/downloads/68260/mingw-get-setup.exe/ will work.
+
+I am using the "official" **GNU Arm Embedded Toolchain Version 7-2018-q2-update**, released on June 27, 2018. I remember having some kind of a problem with the latest release at the time (8-2018-q4-major) and solving it by reverting back one version to the 7-2018-q2 update.  GNU Arm toolchains are generally available at https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+
+I downloaded make-4.2.tar.gz from https://www.gnu.org/software/make/ and http://ftp.gnu.org/gnu/make/ and copied the **Make.exe** from it into my MinGW/MSys/1.0/bin folder.
+
+I believe the source tree for circle can be put anywhere.  Mine is in C:\src\circle. All path references within the Circle project itself are relative. If the setup is working, you can also run "make" from any Circle folder.
+
+
+Changes to Rules.mk
+--------------------
+
+There were very few changes needed to the make system (Rules.mk) to get it to build correctly the first time.  All I did was set the RASPPI according to rst's original instructions and it worked the first time!
+
+I subsequently added some minor extra capabilities to **Rules.mk** that are now used, particularly to build my bootloader, and more generally to allow recursive top-down makes in my development environment.
+
+    TARGET_ROOT ?= kernel
+    TARGET_SUFFIX ?= img
+
+**TARGET_ROOT** and **TARGET_SUFFIX** allow one to specify a different final linked filename besides kernelN.img in top level Makefile(s). This is used in the bootloader, which is built as *recoveryN.img*,  which is called by the stock boot_code.bin **before** kernelN.img.  This allows the bootloader to run on every boot and yet allows the familiar kernelN.img filenames for (your, regular, other) uploaded executables.
+
+    PLUS3B   ?= 1
+        # set this to zero on rPi3 (not plus)
+        
+The **PLUS3B** definition is added to the existing Circle **RASPPI** definition and is passed to the compiler as a define.  This is used by my Circle Bluetooth stack (not included in this initial publication of circle) which needs to send a different HCD file to the rPi onboard BT HCI controller for initialization based on the pi model. You *may* set this appropriatly when you change RASPPI if you want.  You **must** set this appropriately to use my Circle BT stack (later). 
+
+
+    MAKE_LIBS = \
+        ../std_kernel.mark \
+        ../../libaudio.mark \
+
+**MAKE_LIBS** may be defined in a top level makefile to specify a set of subprojects that will be built, top-down, when the top level makefile is built.  You specify a list of subdirectories as *targets* with the file extension **".mark"**.  It allows you to run one build regardless of what you change in any libraries that you specify, and also supports the **clean** parameter.   Note that H file dependencies are **NOT** supported in the Circle makefile scheme, so if you change main Circle header files, you **must** do a clean build of the entire Circle source tree.
+
+The **MAKE_LIBS** macro simply allows you to build, and/or clean, a number of subprojects from the main, top level, makefile.  The above example is from an audio test program that builds a standard kernel and the audio library as needed.
+
+Please see the various makefiles in the system for examples of how these additional capabilities are used.
+
+
+Other Changes to Circle Proper
+------------------------------
+
+Here is a short list of those changes as of this writing:
+
+* addtion of **prhUtils.h** to *assert.h* for **PRH_MODS** definition visible throughout the code
+* minor mods to **ActLed** to allow for toggling the LED on and off and keeping track of it's state
+* changes to **assert** and the **Logger** to *NOT* halt the machine in a *LogPanic*, so that it has time to display the assert results before it stops. Really hard to figure things out if the serial port stops 1 microsecond after the assert happens :-)
+* additon of generic **printf** and **delay** functions so that you don't always have to get back to the kernel or some other static Circle object just to insert some debugging or a test a timing delay.
+* modification of the Circle USB **Bluetooth** device and Circle BT code to allow for generic Bluetooth Transports.
+
+I suspect I am the only person using the Circle Bluetooth stuff, which is only a very partial, tentative impelementation.  The changes I made are not backwards compatible, but if you *are* using the library it should not take much work for you integrate the new API, and you would *probably* be intereseted in my BT stack (more later).
+
+
+Additions
+---------
+
+Thus far, these are the most significant addditions to the Circle code base
+
+* prh/bootLoader - a bootloader that includes HTTP, TFTP, SREC, XMODEM, and my own binary protocols, and which uses the FAT filesystem to write (flash) a new kernel.img to the SD card.
+* addons/lcd - a rude, partial, quick port of the LCD_WIKI library to support various LCD touchscreens and display devices.
+* prh/audio - a port of the Teensy Audio library to the rPi including support for the Audio Injector Stereo and Octo sound cards.
+
+Please note that this repository is **in flux** and undergoing rapid development at this time.   I am in the middle of porting the Teensy Audio Library, and there are many other things coming.
+
+But I wanted to start making this public, so here it is!
+
+
+Credits
 -------
 
-The following C++ classes were added to Circle:
+**rst** for the whole thing
 
-Base library
+**dwelch** for dropping breadcrumbs along the way https://github.com/dwelch67/raspberrypi
 
-* CBcm54213Device: Driver for BCM54213PE Gigabit Ethernet Transceiver of Raspberry Pi 4.
-* CBcmPCIeHostBridge: Driver for PCIe Host Bridge of Raspberry Pi 4.
+**Paul Stoffregen** for just being brilliant.  Oh yeah, and the Teensy https://www.pjrc.com/, and the Teensy Audio Library, https://github.com/PaulStoffregen/Audio and so ...much ... more ...
 
-USB library
 
-* CUSBHCIDevice: Alias for CDWHCIDevice or CXHCIDevice, depending on Raspberry Pi model.
-* CUSBHCIRootPort: Base class, which represents an USB HCI root port.
-* CXHCICommandManager: Synchronous xHC command execution for the xHCI driver.
-* CXHCIDevice: USB host controller interface (xHCI) driver for Raspberry Pi 4.
-* CXHCIEndpoint: Encapsulates a single endpoint of an USB device for the xHCI driver.
-* CXHCIEventManager: xHC event handling for the xHCI driver.
-* CXHCIMMIOSpace: Provides access to the memory-mapped I/O registers of the xHCI controller.
-* CXHCIRing: Encapsulates a transfer, command or event ring for communication with the xHCI controller.
-* CXHCIRootHub: Initializes the available USB root ports of the xHCI controller.
-* CXHCIRootPort: Encapsulates an USB root port of the xHCI controller.
-* CXHCISlotManager: Manages the USB device slots of the xHCI controller.
-* CXHCIUSBDevice: Encapsulates a single USB device, attached to the xHCI controller.
+---------
 
-Net library
+**Raspberry Pi** is a trademark of the *Raspberry Pi Foundation*.
 
-* CPHYTask: Background task which continuously updates the PHY of the used net device.
-
-The available Circle classes are listed in the file *doc/classes.txt*. If you have doxygen installed on your computer you can build a class documentation in *doc/html/* using:
-
-`./makedoc`
-
-At the moment there are only a few classes described in detail for doxygen.
-
-Trademarks
-----------
-
-Raspberry Pi is a trademark of the Raspberry Pi Foundation.
-
-Linux is a trademark of Linus Torvalds.
-
-PS3 and PS4 are registered trademarks of Sony Computer Entertainment Inc.
-
-Xbox 360 and Xbox One are trademarks of the Microsoft group of companies.
-
-Nintendo Switch is a trademark of Nintendo.
-
-Khronos and OpenVG are trademarks of The Khronos Group Inc.
-
-OpenGL ES is a trademark of Silicon Graphics Inc.
