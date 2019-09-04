@@ -1,4 +1,8 @@
 # GIT Ignore
+# prh - ignore my subproject
+
+_prh/
+
 
 # Mac OS X
 # ----------------------------------------------
