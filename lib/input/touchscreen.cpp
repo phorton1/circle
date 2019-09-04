@@ -47,7 +47,9 @@ static const char FromFT5406[] = "ft5406";
 
 CTouchScreenDevice::CTouchScreenDevice (void)
 :	m_pFT5406Buffer (0),
-	m_pEventHandler (0),
+	#ifndef PRH_MODS
+		m_pEventHandler (0),
+	#endif
 	m_nKnownIDs (0)
 {
 }
@@ -133,7 +135,13 @@ void CTouchScreenDevice::Update (void)
 
 				if (m_pEventHandler != 0)
 				{
-					(*m_pEventHandler) (TouchScreenEventFingerDown, nTouchID, x, y);
+					(*m_pEventHandler)(
+					    #ifdef PRH_MODS
+							m_pThat,
+						#endif
+						TouchScreenEventFingerDown,
+						nTouchID,
+						x, y);
 				}
 			}
 			else
@@ -146,7 +154,13 @@ void CTouchScreenDevice::Update (void)
 
 					if (m_pEventHandler != 0)
 					{
-						(*m_pEventHandler) (TouchScreenEventFingerMove, nTouchID, x, y);
+						(*m_pEventHandler)(
+							#ifdef PRH_MODS
+								m_pThat,
+							#endif
+							TouchScreenEventFingerMove,
+							nTouchID,
+							x, y);
 					}
 				}
 			}
@@ -160,7 +174,11 @@ void CTouchScreenDevice::Update (void)
 		{
 			if (m_pEventHandler != 0)
 			{
-				(*m_pEventHandler) (TouchScreenEventFingerUp, i, 0, 0);
+				(*m_pEventHandler)(
+					#ifdef PRH_MODS
+						m_pThat,
+					#endif
+					TouchScreenEventFingerUp, i, 0, 0);
 			}
 
 			nModifiedIDs &= ~(1 << i);
@@ -170,9 +188,11 @@ void CTouchScreenDevice::Update (void)
 	m_nKnownIDs = nModifiedIDs;
 }
 
-void CTouchScreenDevice::RegisterEventHandler (TTouchScreenEventHandler *pEventHandler)
-{
-	assert (m_pEventHandler == 0);
-	m_pEventHandler = pEventHandler;
-	assert (m_pEventHandler != 0);
-}
+#ifndef PRH_MODS
+	void CTouchScreenDevice::RegisterEventHandler (TTouchScreenEventHandler *pEventHandler)
+	{
+		assert (m_pEventHandler == 0);
+		m_pEventHandler = pEventHandler;
+		assert (m_pEventHandler != 0);
+	}
+#endif

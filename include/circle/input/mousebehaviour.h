@@ -36,7 +36,15 @@ enum TMouseEvent
 #define MOUSE_BUTTON_RIGHT	(1 << 1)
 #define MOUSE_BUTTON_MIDDLE	(1 << 2)
 
-typedef void TMouseEventHandler (TMouseEvent Event, unsigned nButtons, unsigned nPosX, unsigned nPosY);
+typedef void TMouseEventHandler(
+	#ifdef PRH_MODS
+		void *pThat,
+	#endif
+	TMouseEvent Event,
+	unsigned nButtons,
+	unsigned nPosX,
+	unsigned nPosY);
+
 
 class CMouseBehaviour
 {
@@ -46,7 +54,12 @@ public:
 
 	boolean Setup (unsigned nScreenWidth, unsigned nScreenHeight);	// returns FALSE on failure
 
-	void RegisterEventHandler (TMouseEventHandler *pEventHandler);
+	void RegisterEventHandler(
+		TMouseEventHandler *pEventHandler
+		#ifdef PRH_MODS
+			,void *pThat
+		#endif
+		);
 
 	boolean SetCursor (unsigned nPosX, unsigned nPosY);		// returns FALSE on failure
 	boolean ShowCursor (boolean bShow);				// returns previous state
@@ -72,6 +85,11 @@ private:
 	unsigned m_nButtons;
 
 	TMouseEventHandler *m_pEventHandler;
+	
+	#ifdef PRH_MODS
+		void *m_pThat;
+	#endif
+	
 };
 
 #endif

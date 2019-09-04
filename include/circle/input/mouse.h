@@ -27,7 +27,7 @@
 #define MOUSE_DISPLACEMENT_MIN	-127
 #define MOUSE_DISPLACEMENT_MAX	127
 
-typedef void TMouseStatusHandler (unsigned nButtons, int nDisplacementX, int nDisplacementY);
+typedef void TMouseStatusHandler(unsigned nButtons, int nDisplacementX, int nDisplacementY);
 
 class CMouseDevice : public CDevice	/// Generic mouse interface device ("mouse1")
 {
@@ -43,7 +43,11 @@ public:
 
 	/// \brief Register event handler in cooked mode
 	/// \param pEventHandler Pointer to the event handler (see: mousebehaviour.h)
-	void RegisterEventHandler (TMouseEventHandler *pEventHandler);
+	void RegisterEventHandler(TMouseEventHandler *pEventHandler
+        #ifdef PRH_MODS
+            ,void *pThat
+        #endif
+        );
 
 	/// \brief Set mouse cursor to a specific position in cooked mode
 	/// \param nPosX X-coordinate of the position in pixels (0 is on the left border)

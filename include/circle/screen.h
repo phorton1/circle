@@ -70,6 +70,47 @@
 	#error DEPTH must be 8, 16 or 32
 #endif
 
+
+#ifdef PRH_MODS
+
+	typedef void (*DriverRegisterFxn)(void *pUI, void *pThis, u8 type, void* driver);
+		// a method to register a particular opimized drawing method
+		// on THIS device with the given UI.
+
+		
+	#define SCREEN_OPT_DRAW_LINE   0
+	#define SCREEN_OPT_FILL_FRAME  1
+	#define SCREEN_OPT_FILL_AREA   2
+		// the signatures of these methods are very specific.
+		// See a UI for more details.
+
+	class CScreenDeviceBase : public CDevice
+	{
+		public:
+			
+			CScreenDeviceBase() {}
+			~CScreenDeviceBase() {}
+			
+			virtual unsigned GetWidth (void) const = 0;
+			virtual unsigned GetHeight (void) const = 0;
+			
+			virtual void SetPixel (unsigned nPosX, unsigned nPosY, TScreenColor Color) = 0;
+			virtual TScreenColor GetPixel (unsigned nPosX, unsigned nPosY) = 0;
+			
+			virtual void InitializeUI(void *pUI, DriverRegisterFxn registerFxn)  {}
+				// Called during UI (ugui) initialization
+				//
+				// The derived screen device is passed a pointer to an instance of
+				// the UI, along with a pointer to a registration method.
+				//
+				// If the derived screen calls  provides optimized drawing routines
+				// that can be ussed by the UI, it responds to this call by, in turn
+				// calling the driver registration function on the UI for each such
+				// method that it supports.
+	};
+#endif
+
+
 struct TScreenStatus
 {
 	TScreenColor   *pContent;
@@ -87,7 +128,13 @@ struct TScreenStatus
 	boolean		bUpdated;
 };
 
+
+
+#ifdef PRH_MODS
+class CScreenDevice : public CScreenDeviceBase
+#else
 class CScreenDevice : public CDevice	/// Writing characters to screen
+#endif
 {
 public:
 	/// \param nWidth   Screen width in pixels (0 for default resolution)

@@ -64,6 +64,10 @@ CMouseBehaviour::CMouseBehaviour (void)
 	m_nButtons (0),
 	m_pEventHandler (0)
 {
+	#ifdef PRH_MODS
+		m_pThat = 0;
+	#endif
+
 }
 
 CMouseBehaviour::~CMouseBehaviour (void)
@@ -105,10 +109,17 @@ boolean CMouseBehaviour::Setup (unsigned nScreenWidth, unsigned nScreenHeight)
 	return TRUE;
 }
 
-void CMouseBehaviour::RegisterEventHandler (TMouseEventHandler *pEventHandler)
+void CMouseBehaviour::RegisterEventHandler(TMouseEventHandler *pEventHandler
+	#ifdef PRH_MODS
+		,void *pThat
+	#endif
+	)
 {
 	assert (m_pEventHandler == 0);
 	m_pEventHandler = pEventHandler;
+	#ifdef PRH_MODS
+		m_pThat = pThat;
+	#endif
 	assert (m_pEventHandler != 0);
 }
 
@@ -189,7 +200,13 @@ void CMouseBehaviour::MouseStatusChanged (unsigned nButtons, int nDisplacementX,
 
 		if (m_pEventHandler != 0)
 		{
-			(*m_pEventHandler) (MouseEventMouseMove, nButtons, m_nPosX, m_nPosY);
+			(*m_pEventHandler)(
+				#ifdef PRH_MODS
+					m_pThat,
+				#endif
+				MouseEventMouseMove,
+				nButtons,
+				m_nPosX, m_nPosY);
 		}
 	}
 
@@ -203,12 +220,25 @@ void CMouseBehaviour::MouseStatusChanged (unsigned nButtons, int nDisplacementX,
 			if (   !(m_nButtons & nMask)
 			    &&  (nButtons & nMask))
 			{
-				(*m_pEventHandler) (MouseEventMouseDown, nMask, m_nPosX, m_nPosY);
+				(*m_pEventHandler)(
+					#ifdef PRH_MODS
+						m_pThat,
+					#endif
+					MouseEventMouseDown,
+					nMask,
+					m_nPosX, m_nPosY);
 			}
 			else if (   (m_nButtons & nMask)
 				 && !(nButtons & nMask))
 			{
-				(*m_pEventHandler) (MouseEventMouseUp, nMask, m_nPosX, m_nPosY);
+				(*m_pEventHandler)(
+					#ifdef PRH_MODS
+						m_pThat,
+					#endif
+					MouseEventMouseUp,
+					nMask,
+					m_nPosX,
+					m_nPosY);
 			}
 		}
 	}

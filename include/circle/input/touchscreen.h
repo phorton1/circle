@@ -31,14 +31,62 @@ enum TTouchScreenEvent
 	TouchScreenEventUnknown
 };
 
-typedef void TTouchScreenEventHandler (TTouchScreenEvent Event,
-				       unsigned nID, unsigned nPosX, unsigned nPosY);
+typedef void TTouchScreenEventHandler(
+#ifdef PRH_MODS
+	void *pThat,
+#endif
+	TTouchScreenEvent Event,
+	unsigned nID,
+	unsigned nPosX,
+	unsigned nPosY);
+
+
+
 #define TOUCH_SCREEN_MAX_POINTS		10
 #define TOUCH_SCREEN_MAX_ID		(TOUCH_SCREEN_MAX_POINTS-1)
 
 struct TFT5406Buffer;
 
-class CTouchScreenDevice : public CDevice
+
+#ifdef PRH_MODS
+
+class CTouchScreenBase : public CDevice
+{
+public:
+	CTouchScreenBase(void)
+	{
+		m_pEventHandler = 0;
+		m_pThat = 0;
+	}
+	
+	~CTouchScreenBase(void) {}
+
+	virtual void Update (void) = 0;		// call this about 60 times per second
+
+	void RegisterEventHandler (TTouchScreenEventHandler *pEventHandler, void *pThat)
+	{
+		m_pEventHandler = pEventHandler;
+		m_pThat = pThat;
+	}
+	
+
+protected:
+	
+	TTouchScreenEventHandler *m_pEventHandler;
+	void *m_pThat;
+
+};
+#endif
+
+
+
+
+#ifdef PRH_MODS
+	class CTouchScreenDevice : public CTouchScreenBase
+#else
+	class CTouchScreenDevice : public CDevice
+		// this instance of a touchscreen should have a different name
+#endif
 {
 public:
 	CTouchScreenDevice (void);
@@ -48,13 +96,17 @@ public:
 
 	void Update (void);		// call this about 60 times per second
 
-	void RegisterEventHandler (TTouchScreenEventHandler *pEventHandler);
+	#ifndef PRH_MODS
+		void RegisterEventHandler (TTouchScreenEventHandler *pEventHandler);
+	#endif
 
 private:
 	TFT5406Buffer *m_pFT5406Buffer;
 
-	TTouchScreenEventHandler *m_pEventHandler;
-
+	#ifndef PRH_MODS
+		TTouchScreenEventHandler *m_pEventHandler;
+	#endif
+	
 	unsigned m_nKnownIDs;
 
 	unsigned m_nPosX[TOUCH_SCREEN_MAX_POINTS];

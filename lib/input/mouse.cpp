@@ -44,9 +44,17 @@ boolean CMouseDevice::Setup (unsigned nScreenWidth, unsigned nScreenHeight)
 	return m_Behaviour.Setup (nScreenWidth, nScreenHeight);
 }
 
-void CMouseDevice::RegisterEventHandler (TMouseEventHandler *pEventHandler)
+void CMouseDevice::RegisterEventHandler (TMouseEventHandler *pEventHandler
+	#ifdef PRH_MODS
+		,void *pThat
+	#endif
+	)
 {
-	m_Behaviour.RegisterEventHandler (pEventHandler);
+	m_Behaviour.RegisterEventHandler (pEventHandler
+		#ifdef PRH_MODS
+			,pThat
+		#endif
+		);
 }
 
 boolean CMouseDevice::SetCursor (unsigned nPosX, unsigned nPosY)
