@@ -55,7 +55,9 @@ CLogger::CLogger (unsigned nLogLevel, CTimer *pTimer)
 	m_pPanicHandler (0)
 {
 	m_pBuffer = new char[LOGGER_BUFSIZE];
-
+#ifdef PRH_MODS
+	m_default_color_code = 97;
+#endif
 	s_pThis = this;
 }
 
@@ -121,6 +123,12 @@ void CLogger::WriteV (const char *pSource, TLogSeverity Severity, const char *pM
 	{
 		Buffer = "\x1b[1m";
 	}
+#ifdef PRH_MODS
+	else if (m_default_color_code)
+	{
+		Buffer.Format("\x1b[%dm",m_default_color_code);
+	}
+#endif
 
 	if (m_pTimer != 0)
 	{
@@ -164,6 +172,7 @@ void CLogger::WriteV (const char *pSource, TLogSeverity Severity, const char *pM
 #else
 		Breakpoint (0);
 #endif
+
 	}
 }
 
@@ -220,7 +229,15 @@ void CLogger::Write (const char *pString)
 {
 	unsigned long nLength = strlen (pString);
 
-	m_pTarget->Write (pString, nLength);
+#ifdef PRH_MODS
+	// prh - don't access the device if the logger
+	// has not been initialized yet.  Needed if you
+	// are going to use a Serial device for logging,
+	// as other objects are initialized, and call this
+	// method, before the Serial device can be initialized.
+	if (m_pTarget)
+#endif
+		m_pTarget->Write (pString, nLength);
 
 	m_SpinLock.Acquire ();
 

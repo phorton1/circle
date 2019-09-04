@@ -52,6 +52,11 @@ public:
 	~CLogger (void);
 
 	boolean Initialize (CDevice *pTarget);
+	
+    #ifdef PRH_MODS
+		void setDefaultAnsiColorCode(int code) { m_default_color_code = code; }
+		int m_default_color_code;
+	#endif		
 
 	void Write (const char *pSource, TLogSeverity Severity, const char *pMessage, ...);
 	void WriteV (const char *pSource, TLogSeverity Severity, const char *pMessage, va_list Args);
