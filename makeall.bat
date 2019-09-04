@@ -95,6 +95,11 @@ cd ..
 
 cd _prh
 
+    cd utils
+    make %1 %2
+    if %errorlevel% neq 0 cd ../..; exit /b %errorlevel%
+    cd ..
+
     cd bootloader
     make %1 %2
     if %errorlevel% neq 0 cd ../..; exit /b %errorlevel%
