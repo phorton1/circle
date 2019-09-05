@@ -49,14 +49,22 @@ boolean CUGUI::Initialize (void)
 		{
 			m_pMouseDevice->ShowCursor (TRUE);
 
-			m_pMouseDevice->RegisterEventHandler (MouseEventStub);
+			m_pMouseDevice->RegisterEventHandler (MouseEventStub
+				#ifdef PRH_MODS
+					,this
+				#endif
+				);
 		}
 	}
 
 	m_pTouchScreen = (CTouchScreenDevice *) CDeviceNameService::Get ()->GetDevice ("touch1", FALSE);
 	if (m_pTouchScreen != 0)
 	{
-		m_pTouchScreen->RegisterEventHandler (TouchScreenEventStub);
+		m_pTouchScreen->RegisterEventHandler (TouchScreenEventStub
+				#ifdef PRH_MODS
+					,this
+				#endif
+		);
 	}
 
 	UG_TouchUpdate (-1, -1, TOUCH_STATE_RELEASED);
@@ -115,7 +123,11 @@ void CUGUI::MouseEventHandler (TMouseEvent Event, unsigned nButtons, unsigned nP
 	}
 }
 
-void CUGUI::MouseEventStub (TMouseEvent Event, unsigned nButtons, unsigned nPosX, unsigned nPosY)
+void CUGUI::MouseEventStub (
+	#ifdef PRH_MODS
+		void *pThis,
+	#endif
+	TMouseEvent Event, unsigned nButtons, unsigned nPosX, unsigned nPosY)
 {
 	assert (s_pThis != 0);
 	s_pThis->MouseEventHandler (Event, nButtons, nPosX, nPosY);
@@ -144,7 +156,11 @@ void CUGUI::TouchScreenEventHandler (TTouchScreenEvent Event, unsigned nID, unsi
 	}
 }
 
-void CUGUI::TouchScreenEventStub (TTouchScreenEvent Event, unsigned nID, unsigned nPosX, unsigned nPosY)
+void CUGUI::TouchScreenEventStub (
+	#ifdef PRH_MODS
+		void *pThis,
+	#endif
+	TTouchScreenEvent Event, unsigned nID, unsigned nPosX, unsigned nPosY)
 {
 	assert (s_pThis != 0);
 	s_pThis->TouchScreenEventHandler (Event, nID, nPosX, nPosY);

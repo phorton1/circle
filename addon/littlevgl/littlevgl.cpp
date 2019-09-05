@@ -113,7 +113,11 @@ boolean CLittlevGL::Initialize (void)
 		{
 			m_pMouseDevice->ShowCursor (TRUE);
 
-			m_pMouseDevice->RegisterEventHandler (MouseEventHandler);
+			m_pMouseDevice->RegisterEventHandler (MouseEventHandler
+				#ifdef PRH_MODS
+					,this
+				#endif
+			);
 		}
 		else
 		{
@@ -126,7 +130,11 @@ boolean CLittlevGL::Initialize (void)
 		m_pTouchScreen = (CTouchScreenDevice *) CDeviceNameService::Get ()->GetDevice ("touch1", FALSE);
 		if (m_pTouchScreen != 0)
 		{
-			m_pTouchScreen->RegisterEventHandler (TouchScreenEventHandler);
+			m_pTouchScreen->RegisterEventHandler (TouchScreenEventHandler
+				#ifdef PRH_MODS
+					,this
+				#endif
+			);
 		}
 	}
 
@@ -221,8 +229,12 @@ bool CLittlevGL::PointerRead (lv_indev_drv_t *pDriver, lv_indev_data_t *pData)
 	return false;
 }
 
-void CLittlevGL::MouseEventHandler (TMouseEvent Event, unsigned nButtons,
-				    unsigned nPosX, unsigned nPosY)
+void CLittlevGL::MouseEventHandler (
+	#ifdef PRH_MODS
+		void *pThis,
+	#endif
+	TMouseEvent Event, unsigned nButtons,
+	unsigned nPosX, unsigned nPosY)
 {
 	assert (s_pThis != 0);
 
@@ -250,8 +262,12 @@ void CLittlevGL::MouseEventHandler (TMouseEvent Event, unsigned nButtons,
 	}
 }
 
-void CLittlevGL::TouchScreenEventHandler (TTouchScreenEvent Event, unsigned nID,
-					  unsigned nPosX, unsigned nPosY)
+void CLittlevGL::TouchScreenEventHandler (
+	#ifdef PRH_MODS
+		void *pThis,
+	#endif
+	TTouchScreenEvent Event, unsigned nID,
+	unsigned nPosX, unsigned nPosY)
 {
 	assert (s_pThis != 0);
 

@@ -36,12 +36,20 @@ private:
 	static void SetPixel (UG_S16 sPosX, UG_S16 sPosY, UG_COLOR Color);
 
 	void MouseEventHandler (TMouseEvent Event, unsigned nButtons, unsigned nPosX, unsigned nPosY);
-	static void MouseEventStub (TMouseEvent Event, unsigned nButtons, unsigned nPosX, unsigned nPosY);
+	static void MouseEventStub (
+        #ifdef PRH_MODS
+            void *pThis,
+        #endif
+        TMouseEvent Event, unsigned nButtons, unsigned nPosX, unsigned nPosY);
 
 	void TouchScreenEventHandler (TTouchScreenEvent Event,
 				      unsigned nID, unsigned nPosX, unsigned nPosY);
-	static void TouchScreenEventStub (TTouchScreenEvent Event,
-					  unsigned nID, unsigned nPosX, unsigned nPosY);
+	static void TouchScreenEventStub (
+        #ifdef PRH_MODS
+            void *pThis,
+        #endif
+        TTouchScreenEvent Event,
+		unsigned nID, unsigned nPosX, unsigned nPosY);
 
 private:
 	CScreenDevice *m_pScreen;

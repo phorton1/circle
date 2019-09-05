@@ -49,10 +49,18 @@ private:
 	static void DisplayFlushComplete (unsigned nChannel, boolean bStatus, void *pParam);
 
 	static bool PointerRead (lv_indev_drv_t *pDriver, lv_indev_data_t *pData);
-	static void MouseEventHandler (TMouseEvent Event, unsigned nButtons,
-				       unsigned nPosX, unsigned nPosY);
-	static void TouchScreenEventHandler (TTouchScreenEvent Event, unsigned nID,
-					     unsigned nPosX, unsigned nPosY);
+	static void MouseEventHandler (
+        #ifdef PRH_MODS
+            void *pThis,
+        #endif
+        TMouseEvent Event, unsigned nButtons,
+        unsigned nPosX, unsigned nPosY);
+	static void TouchScreenEventHandler (
+        #ifdef PRH_MODS
+            void *pThis,
+        #endif
+        TTouchScreenEvent Event, unsigned nID,
+        unsigned nPosX, unsigned nPosY);
 
 private:
 	lv_color_t *m_pBuffer1;
