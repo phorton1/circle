@@ -6,7 +6,7 @@ Version
 
 This is a fork of the Circle is a C++ bare metal programming environment for the Raspberry Pi.
 
-It is based on the stable verion 3.19 of Circle.  Changes to the core Circle source code have been minimized and carefully documented to allow for future updates to the Circle codebase, but otherwise, this is a completely detatched and separate fork of Circle.
+Changes to the core Circle source code have been minimized and carefully documented to allow for future updates to the Circle codebase, but otherwise, this is a completely detatched and separate fork of Circle.
 
 All code changes within existing Circle source files are bracketed by #ifdef PRH_MODS.
 
@@ -67,33 +67,6 @@ The **MAKE_LIBS** macro simply allows you to build, and/or clean, a number of su
 
 Please see the various makefiles in the system for examples of how these additional capabilities are used.
 
-
-Other Changes to Circle Proper
-------------------------------
-
-Here is a short list of those changes as of this writing:
-
-* addtion of **prhUtils.h** to *assert.h* for **PRH_MODS** definition visible throughout the code
-* minor mods to **ActLed** to allow for toggling the LED on and off and keeping track of it's state
-* changes to **assert** and the **Logger** to *NOT* halt the machine in a *LogPanic*, so that it has time to display the assert results before it stops. Really hard to figure things out if the serial port stops 1 microsecond after the assert happens :-)
-* additon of generic **printf** and **delay** functions so that you don't always have to get back to the kernel or some other static Circle object just to insert some debugging or a test a timing delay.
-* modification of the Circle USB **Bluetooth** device and Circle BT code to allow for generic Bluetooth Transports.
-
-I suspect I am the only person using the Circle Bluetooth stuff, which is only a very partial, tentative impelementation.  The changes I made are not backwards compatible, but if you *are* using the library it should not take much work for you integrate the new API, and you would *probably* be intereseted in my BT stack (more later).
-
-
-Additions
----------
-
-Thus far, these are the most significant addditions to the Circle code base
-
-* prh/bootLoader - a bootloader that includes HTTP, TFTP, SREC, XMODEM, and my own binary protocols, and which uses the FAT filesystem to write (flash) a new kernel.img to the SD card.
-* addons/lcd - a rude, partial, quick port of the LCD_WIKI library to support various LCD touchscreens and display devices.
-* prh/audio - a port of the Teensy Audio library to the rPi including support for the Audio Injector Stereo and Octo sound cards.
-
-Please note that this repository is **in flux** and undergoing rapid development at this time.   I am in the middle of porting the Teensy Audio Library, and there are many other things coming.
-
-But I wanted to start making this public, so here it is!
 
 
 Credits
