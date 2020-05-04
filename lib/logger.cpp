@@ -30,6 +30,18 @@
 
 #define LOGGER_BUFSIZE	0x4000
 
+// PRH comments
+//
+// The ONLY thing the buffering is used for is lib/net/syslogdaemon
+// which is the only method in circle that calls ReadEvent().
+// CSysLogDaemon is part of the net library, and is ONLY called
+// in circle/sample/33-syslog kernel.cpp.
+
+
+
+
+
+
 struct TLogEvent
 {
 	TLogSeverity	Severity;
