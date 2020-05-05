@@ -88,7 +88,7 @@
 // single core applications, because this may slow down the system
 // because multiple cores may compete for bus time without use.
 
-//#define ARM_ALLOW_MULTI_CORE
+#define ARM_ALLOW_MULTI_CORE
 
 #endif
 
