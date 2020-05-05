@@ -205,6 +205,18 @@ int CSerialDevice::Write (const void *pBuffer, size_t nCount)
 
 	int nResult = 0;
 
+	// prh - if !interrupts, Write writes it directly
+	// but if interrupts, it buffers it, and then
+	// does a second loop here
+	//
+	// this is the only call to this private version of Write()
+	// so I am going to try to turn of interrupts for output
+	// only to fix my logging problem by invariantely having
+	// Write() go directly out.
+	//
+	// This "fixex" my problem with logging overflows and junk
+	// at 10-VuMeter, but HAS NOT BEEN TESTED IN THE BOOTLOADER
+	
 	while (nCount--)
 	{
 		if (!Write (*pChar))
@@ -228,7 +240,11 @@ int CSerialDevice::Write (const void *pBuffer, size_t nCount)
 
 	m_LineSpinLock.Release ();
 
-	if (m_pInterruptSystem != 0)
+	if (
+#ifdef PRH_MODS
+		0 && 		// disable this code in my version
+#endif		
+		m_pInterruptSystem != 0)
 	{
 		m_SpinLock.Acquire ();
 
@@ -438,7 +454,11 @@ boolean CSerialDevice::Write (u8 uchChar)
 {
 	boolean bOK = TRUE;
 
-	if (m_pInterruptSystem != 0)
+	if (
+#ifdef PRH_MODS
+		0 && 		// disable this code in my version (see comments in public Write() method)
+#endif		
+		m_pInterruptSystem != 0)
 	{
 		m_SpinLock.Acquire ();
 
