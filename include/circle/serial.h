@@ -27,7 +27,16 @@
 #include <circle/sysconfig.h>
 #include <circle/types.h>
 
-#define SERIAL_BUF_SIZE		2048			// must be a power of 2
+#ifdef PRH_MODS
+    // I was having problems with buffer overflows.
+    // Disabling interrupts caused noise in the audio system with UI.
+    // Increasing the size of this buffer helped.
+    
+    #define SERIAL_BUF_SIZE	    32768			// must be a power of 2
+#else
+    #define SERIAL_BUF_SIZE		2048			// must be a power of 2
+#endif
+
 #define SERIAL_BUF_MASK		(SERIAL_BUF_SIZE-1)
 
 // serial options
