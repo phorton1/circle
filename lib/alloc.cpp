@@ -83,6 +83,12 @@ static TPageBucket s_PageBucket;
 static CSpinLock s_BlockSpinLock;
 static CSpinLock s_PageSpinLock;
 
+
+#if 0
+	unsigned long prhFreePtr = 0;
+#endif
+
+
 void mem_init (unsigned long ulBase, unsigned long ulSize)
 {
 	unsigned long ulLimit = ulBase + ulSize;
@@ -91,8 +97,14 @@ void mem_init (unsigned long ulBase, unsigned long ulSize)
 	{
 		ulBase = MEM_HEAP_START;
 	}
+
+	#if 0
+		prhFreePtr = ulBase;
+		ulBase += 256 * MEGABYTE;
+	#endif
 	
 	ulSize = ulLimit - ulBase;
+	
 	unsigned long ulBlockReserve = ulSize - PAGE_RESERVE;
 
 	s_pNextBlock = (unsigned char *) ulBase;
@@ -100,6 +112,10 @@ void mem_init (unsigned long ulBase, unsigned long ulSize)
 
 	s_pNextPage = (unsigned char *) ((ulBase + ulBlockReserve + PAGE_SIZE) & ~PAGE_MASK);
 	s_pPageLimit = (unsigned char *) ulLimit;
+	
+	#if 0
+		prhFreePtr = (unsigned long) malloc(256 * MEGABYTE);
+	#endif
 }
 
 unsigned long mem_get_size (void)
