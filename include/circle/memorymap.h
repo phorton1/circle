@@ -40,6 +40,30 @@
 #define PAGE_SIZE		4096				// page size used by us
 
 #define KERNEL_STACK_SIZE	0x20000				// all sizes must be a multiple of 16K
+    // PRH NOTES
+    //
+    // ORIGINAL SETTING 0x20000
+    //
+    //      MEM_KERNEL_START is a constant 0x8000                        0x8000
+    //      KERNEL_MAX_SIZE is a constant 2*MEGABYTE (2*0x100000)        ...
+    //      MEM_KERNEL_END = MEM_KERNEL_START + KERNEL_MAX_SIZE          0x208000 
+    //      MEM_KERNEL_STACK = MEM_KERNEL_END + KERNEL_STACK_SIZE        0x228000
+    //      
+    //      Other cores use the same amount, presumably above the kernel stack
+    //
+    //                            at start CoreTask::Run()    Used (decimal)
+    //          Core0: 0x228000         0x00216a78            0x11588     71048    
+    //          Core1: 0x248000         0x00247f90            0x70        112
+    //          Core2: 0x268000         0x00267f90              "          "
+    //          Core3: 0x288000         0x00277f90              "          "
+    //
+    //      The original circle stack size value of 0x20000 == 131072 bytes is
+    //      sufficient, in my analysis, with everything in std_kernel.cpp turned on,
+    //      as measured at the start of CoreTask::Run.  Core0 uses the most memory
+    //      before getting to CKernel::Run(), at which point it is 0x00216ac8,
+    //      which is 0x11538=70968 bytes used.
+
+
 #define EXCEPTION_STACK_SIZE	0x8000
 #define PAGE_TABLE1_SIZE	0x4000
 #define PAGE_RESERVE		(4 * MEGABYTE)
