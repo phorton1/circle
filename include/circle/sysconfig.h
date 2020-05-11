@@ -198,8 +198,10 @@
 // modifies floating point registers. IRQ handling will be a little
 // slower then.
 
-//#define SAVE_VFP_REGS_ON_IRQ
-
+#define SAVE_VFP_REGS_ON_IRQ
+    // prh turned on 2020-05-10
+    // audio devices likely use floating point math
+    
 // SAVE_VFP_REGS_ON_FIQ enables saving the floating point registers
 // on entry when an FIQ occurs and will restore these registers on exit
 // from the FIQ handler. This has to be defined, if the FIQ handler
