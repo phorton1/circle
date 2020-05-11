@@ -62,15 +62,15 @@ cd addon
     if %errorlevel% neq 0 exit /b %errorlevel%
     cd ..
 
-    cd ugui
-    make %1 %2
-    if %errorlevel% neq 0 exit /b %errorlevel%
-    cd ..
-
-    cd littlevgl
-    make %1 %2
-    if %errorlevel% neq 0 exit /b %errorlevel%
-    cd ..
+    rem cd ugui
+    rem make %1 %2
+    rem if %errorlevel% neq 0 exit /b %errorlevel%
+    rem cd ..
+    rem 
+    rem cd littlevgl
+    rem make %1 %2
+    rem if %errorlevel% neq 0 exit /b %errorlevel%
+    rem cd ..
     
     if %VHIQ_SOUND%==0 goto NO_VHIQ_SOUND
     
