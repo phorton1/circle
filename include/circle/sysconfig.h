@@ -89,6 +89,9 @@
 // because multiple cores may compete for bus time without use.
 
 #define ARM_ALLOW_MULTI_CORE
+    // PRH NOTE:  This must be turned off when compiling the bootloader,
+    // thus requiring a full rebuild of circle when switching between
+    // projects and the boot loader
 
 #endif
 
