@@ -89,6 +89,155 @@ static CSpinLock s_PageSpinLock;
 #endif
 
 
+#ifdef PRH_MODS
+	#include <utils/myUtils.h>
+	
+	#ifdef DPROBE
+	
+		#define MAX_MEM_MAP   1024
+
+		bool alloc_in_probe = 0;
+		
+		
+		bool check_alloc()
+		{
+			if (alloc_in_probe)
+			{
+				// printf("check_alloc re-entered\n",0);
+				return false;
+			}
+			alloc_in_probe = true;
+			
+			#if 0
+			for (pBucket = s_BlockBucket; pBucket->nSize > 0; pBucket++)
+			{
+				TBlockHeader *pBlockHeader = pBucket->pFreeList;
+				while (pBlockHeader)
+				{
+					if (pBlockHeader->nMagic == BLOCK_MAGIC))
+					{
+						printf("alloc BLOCK_MAGIC failure!!! pBlockHeader=%08X",(u32)pBlockHeader);
+						return false;
+					}
+					pBlockHeader = pBlockHeader->next;
+				}
+			}
+			#endif
+			alloc_in_probe = false;
+			return false;
+		}
+		
+		
+		void dump_alloc()
+		{
+			if (alloc_in_probe)
+			{
+				printf("dump_alloc re-entered\n",0);
+				return;
+			}
+			alloc_in_probe = true;
+
+			
+			printf("alloc mem=%dM NextBlock=%08x BlockLimit=%08x NextPage=%08x PageLimit=%08x\n",
+				   mem_get_size()/MEGABYTE,
+				   (u32) s_pNextBlock,
+				   (u32) s_pBlockLimit,
+				   (u32) s_pNextPage,
+				   (u32) s_pPageLimit);
+			TBlockBucket *pBucket;
+			for (pBucket = s_BlockBucket; pBucket->nSize > 0; pBucket++)
+			{
+				// with MEM_DEBUG_ON you get count and maxcount
+				printf("    bucket(%08x) count=%d max=%d free=%08x\n",
+					pBucket->nSize,
+					pBucket->nCount,
+					pBucket->nMaxCount,
+					(u32) pBucket->pFreeList);
+			}
+
+			int num = 0;
+			int map_len = 0;
+			char map[MAX_MEM_MAP+1];
+			unsigned char *ptr  = (unsigned char *) MEM_HEAP_START;
+			while (ptr < s_pNextBlock)
+			{
+				TBlockHeader *pBlock = (TBlockHeader *) ptr;
+				u32 size = pBlock->nSize;
+				char c = '.';
+				
+				if (size > 0x80000)
+				{
+					c = 'H';
+				}
+				else if (size > 0x40000)
+				{
+					c = 'G';
+				}
+				else if (size > 0x10000)
+				{
+					c = 'F';
+				}
+				else if (size > 0x4000)
+				{
+					c = 'E';
+				}
+				else if (size > 0x4000)
+				{
+					c = 'D';
+				}
+				else if (size > 0x400)
+				{
+					c = 'C';
+				}
+				else if (size > 0x40)
+				{
+					c = 'B';
+				}
+				else if (size == 0x40)
+				{
+					c = 'A';
+				}
+				else
+				{
+					c = 'Z';
+				}
+				
+				if (!pBlock->nPadding)
+					c += 32;
+				
+				if ((num % 32 == 0) && (map_len < MAX_MEM_MAP - 8))
+				{
+					if (map_len == 0)
+					{
+						strcpy(map,"MAP: ");
+					}
+					else
+					{
+						map[map_len++] = 13;
+						map[map_len++] = 10;
+						strcpy(&map[map_len],"     ");
+					}
+					map_len += 5;
+				}
+
+				if (map_len < MAX_MEM_MAP)
+				{
+					map[map_len++] = c;
+				}
+				
+				num++;
+				u32 next = (sizeof(TBlockHeader) + size + BLOCK_ALIGN-1) & ~ALIGN_MASK;
+				ptr += next;
+			}
+			
+			map[map_len++] = 0;
+			printf("%s\n",map);
+			alloc_in_probe = false;
+		}
+	#endif
+#endif
+
+
 void mem_init (unsigned long ulBase, unsigned long ulSize)
 {
 	unsigned long ulLimit = ulBase + ulSize;
@@ -98,9 +247,11 @@ void mem_init (unsigned long ulBase, unsigned long ulSize)
 		ulBase = MEM_HEAP_START;
 	}
 
-	#if 0
-		prhFreePtr = ulBase;
-		ulBase += 256 * MEGABYTE;
+	#ifdef PRH_MODS
+		#if 0
+			prhFreePtr = ulBase;
+			ulBase += 256 * MEGABYTE;
+		#endif
 	#endif
 	
 	ulSize = ulLimit - ulBase;
@@ -113,8 +264,10 @@ void mem_init (unsigned long ulBase, unsigned long ulSize)
 	s_pNextPage = (unsigned char *) ((ulBase + ulBlockReserve + PAGE_SIZE) & ~PAGE_MASK);
 	s_pPageLimit = (unsigned char *) ulLimit;
 	
-	#if 0
-		prhFreePtr = (unsigned long) malloc(256 * MEGABYTE);
+	#ifdef PRH_MODS
+		#if 0
+			prhFreePtr = (unsigned long) malloc(256 * MEGABYTE);
+		#endif
 	#endif
 }
 
@@ -169,6 +322,7 @@ void *malloc (size_t nSize)
 			s_BlockSpinLock.Release ();
 
 #ifdef MEM_DEBUG
+			dprobe(-1,"ALLOC OUT OF MEMORY !!!",0);
 			mem_info ();
 #endif
 #if STDLIB_SUPPORT == 3
@@ -194,6 +348,10 @@ void *malloc (size_t nSize)
 	void *pResult = pBlockHeader->Data;
 	assert (((unsigned long) pResult & ALIGN_MASK) == 0);
 
+	#ifdef DPROBE
+		pBlockHeader->nPadding = 1;	// used bit
+	#endif
+	
 	return pResult;
 }
 
@@ -206,6 +364,11 @@ void free (void *pBlock)
 
 	TBlockHeader *pBlockHeader = (TBlockHeader *) ((unsigned long) pBlock - sizeof (TBlockHeader));
 	assert (pBlockHeader->nMagic == BLOCK_MAGIC);
+
+	#ifdef DPROBE
+		pBlockHeader->nPadding = 0;	// used bit
+	#endif
+	
 
 	for (TBlockBucket *pBucket = s_BlockBucket; pBucket->nSize > 0; pBucket++)
 	{
