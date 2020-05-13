@@ -20,7 +20,8 @@
 #ifndef _alloc_h
 #define _alloc_h
 
-//#define MEM_DEBUG
+#define MEM_DEBUG
+    // prh - turned on 2020-05-13
 
 #include <circle/types.h>
 
