@@ -136,6 +136,14 @@ void CLogger::WriteV (const char *pSource, TLogSeverity Severity, const char *pM
 		Buffer = "\x1b[1m";
 	}
 #ifdef PRH_MODS
+	else if (Severity == LogError)
+	{
+		Buffer = "\x1b[30m";
+	}
+	else if (Severity == LogWarning)
+	{
+		Buffer = "\x1b[93m";
+	}
 	else if (m_default_color_code)
 	{
 		Buffer.Format("\x1b[%dm",m_default_color_code);
