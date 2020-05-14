@@ -107,21 +107,36 @@ static CSpinLock s_PageSpinLock;
 				return false;
 			}
 			alloc_in_probe = true;
+
+			unsigned char *ptr  = (unsigned char *) MEM_HEAP_START;
+			while (ptr < s_pNextBlock)
+			{
+				TBlockHeader *pBlock = (TBlockHeader *) ptr;
+				if (pBlock->nMagic != BLOCK_MAGIC)
+				{
+					printf("alloc BLOCK_MAGIC failure!!! pBlock=%08X",(u32)pBlock);
+					return true;
+				}
+				
+				u32 size = pBlock->nSize;
+				u32 next = (sizeof(TBlockHeader) + size + BLOCK_ALIGN-1) & ~ALIGN_MASK;
+				ptr += next;
+			}
 			
 			#if 0
-			for (pBucket = s_BlockBucket; pBucket->nSize > 0; pBucket++)
-			{
-				TBlockHeader *pBlockHeader = pBucket->pFreeList;
-				while (pBlockHeader)
+				for (pBucket = s_BlockBucket; pBucket->nSize > 0; pBucket++)
 				{
-					if (pBlockHeader->nMagic == BLOCK_MAGIC))
+					TBlockHeader *pBlockHeader = pBucket->pFreeList;
+					while (pBlockHeader)
 					{
-						printf("alloc BLOCK_MAGIC failure!!! pBlockHeader=%08X",(u32)pBlockHeader);
-						return false;
+						if (pBlockHeader->nMagic != BLOCK_MAGIC)
+						{
+							printf("alloc BLOCK_MAGIC failure!!! pBlockHeader=%08X",(u32)pBlockHeader);
+							return false;
+						}
+						pBlockHeader = pBlockHeader->next;
 					}
-					pBlockHeader = pBlockHeader->next;
 				}
-			}
 			#endif
 			alloc_in_probe = false;
 			return false;
