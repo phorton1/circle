@@ -171,6 +171,12 @@ boolean CUSBMIDIDevice::StartRequest (void)
 	return GetHost ()->SubmitAsyncRequest (m_pURB);
 }
 
+
+#ifdef PRH_MODS
+	int g_sUSBMIDIDeviceDelay = 10;
+#endif
+
+
 void CUSBMIDIDevice::CompletionRoutine (CUSBRequest *pURB)
 {
 	assert (pURB != 0);
@@ -213,7 +219,11 @@ void CUSBMIDIDevice::CompletionRoutine (CUSBRequest *pURB)
 	else
 	{
 		assert (m_hTimer == 0);
-		m_hTimer = CTimer::Get ()->StartKernelTimer (MSEC2HZ (10), TimerStub, 0, this);
+		#ifdef PRH_MODS
+				m_hTimer = CTimer::Get ()->StartKernelTimer (MSEC2HZ (g_sUSBMIDIDeviceDelay), TimerStub, 0, this);
+		#else
+				m_hTimer = CTimer::Get ()->StartKernelTimer (MSEC2HZ (10), TimerStub, 0, this);
+		#endif
 		assert (m_hTimer != 0);
 	}
 }

@@ -38,6 +38,9 @@ CUSBHIDDevice::CUSBHIDDevice (CUSBFunction *pFunction, unsigned nMaxReportSize)
 		m_pReportBuffer = new u8[m_nMaxReportSize];
 		assert (m_pReportBuffer != 0);
 	}
+	#ifdef PRH_MODS
+		m_hTimer = 0;
+	#endif	
 }
 
 CUSBHIDDevice::~CUSBHIDDevice (void)
@@ -209,6 +212,30 @@ boolean CUSBHIDDevice::StartRequest (void)
 	return GetHost ()->SubmitAsyncRequest (m_pURB);
 }
 
+
+#ifdef PRH_MODS
+	
+	int g_sUSBHIDDeviceDelay = 0;
+
+	void CUSBHIDDevice::TimerHandler (TKernelTimerHandle hTimer)
+	{
+		assert (m_hTimer == hTimer);
+		m_hTimer = 0;
+	
+		StartRequest ();
+	}
+	
+	void CUSBHIDDevice::TimerStub (TKernelTimerHandle hTimer, void *pParam, void *pContext)
+	{
+		CUSBHIDDevice *pThis = (CUSBHIDDevice *) pContext;
+		assert (pThis != 0);
+	
+		pThis->TimerHandler (hTimer);
+	}
+#endif
+
+
+
 void CUSBHIDDevice::CompletionRoutine (CUSBRequest *pURB)
 {
 	assert (pURB != 0);
@@ -226,6 +253,17 @@ void CUSBHIDDevice::CompletionRoutine (CUSBRequest *pURB)
 	delete m_pURB;
 	m_pURB = 0;
 	
+	
+	#ifdef PRH_MODS
+		if (g_sUSBHIDDeviceDelay)
+		{
+			assert (m_hTimer == 0);
+			m_hTimer = CTimer::Get ()->StartKernelTimer (MSEC2HZ (g_sUSBHIDDeviceDelay), TimerStub, 0, this);	
+			assert (m_hTimer != 0);
+		}
+		else
+	#endif
+
 	if (!StartRequest ())
 	{
 		CLogger::Get ()->Write (FromUSBHID, LogError, "Cannot restart request");

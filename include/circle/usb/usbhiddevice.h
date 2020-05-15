@@ -26,6 +26,10 @@
 #include <circle/usb/usbhostcontroller.h>
 #include <circle/types.h>
 
+#ifdef PRH_MODS
+	#include <circle/timer.h>
+#endif
+
 class CUSBHIDDevice : public CUSBFunction
 {
 public:
@@ -68,6 +72,13 @@ private:
 	CUSBRequest *m_pURB;
 
 	u8 *m_pReportBuffer;
+    
+#ifdef PRH_MODS
+    TKernelTimerHandle m_hTimer;
+    void TimerHandler (TKernelTimerHandle hTimer);
+	static void TimerStub (TKernelTimerHandle hTimer, void *pParam, void *pContext);
+#endif
+
 };
 
 #endif
