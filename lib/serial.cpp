@@ -110,7 +110,12 @@ CSerialDevice::CSerialDevice (CInterruptSystem *pInterruptSystem, boolean bUseFI
 	m_nTxInPtr (0),
 	m_nTxOutPtr (0),
 	m_nOptions (SERIAL_OPTION_ONLCR),
-	m_pMagic (0),
+    #ifdef PRH_MODS
+        m_pReceiveIRQObject(0),
+        m_pReceiveIRQMethod(0),
+    #else
+		m_pMagic (0),
+	#endif
 	m_SpinLock (bUseFIQ ? FIQ_LEVEL : IRQ_LEVEL)
 #ifdef REALTIME
 	, m_LineSpinLock (TASK_LEVEL)
@@ -216,7 +221,7 @@ int CSerialDevice::Write (const void *pBuffer, size_t nCount)
 	//
 	// This "fixex" my problem with logging overflows and junk
 	// at 10-VuMeter, but HAS NOT BEEN TESTED IN THE BOOTLOADER
-	
+
 	while (nCount--)
 	{
 		if (!Write (*pChar))
@@ -243,7 +248,7 @@ int CSerialDevice::Write (const void *pBuffer, size_t nCount)
 	if (
 #ifdef PRH_MODS
 		0 && 		// disable this code in my version
-#endif		
+#endif
 		m_pInterruptSystem != 0)
 	{
 		m_SpinLock.Acquire ();
@@ -364,20 +369,32 @@ void CSerialDevice::SetOptions (unsigned nOptions)
 	m_nOptions = nOptions;
 }
 
-void CSerialDevice::RegisterMagicReceivedHandler (const char *pMagic, TMagicReceivedHandler *pHandler)
-{
-	assert (m_pInterruptSystem != 0);
-	assert (m_pMagic == 0);
 
-	assert (pMagic != 0);
-	assert (*pMagic != '\0');
-	assert (pHandler != 0);
+#ifdef PRH_MODS
+	void CSerialDevice::RegisterReceiveIRQHandler(void *pObject, ReceiveIRQHandler *pHandler)
+	{
+        m_pReceiveIRQObject = pObject;
+        m_pReceiveIRQMethod = pHandler;
+	}
+#else
+	void CSerialDevice::RegisterMagicReceivedHandler (const char *pMagic, TMagicReceivedHandler *pHandler)
+	{
+		assert (m_pInterruptSystem != 0);
+		assert (m_pMagic == 0);
 
-	m_pMagicReceivedHandler = pHandler;
+		assert (pMagic != 0);
+		assert (*pMagic != '\0');
+		assert (pHandler != 0);
 
-	m_pMagicPtr = pMagic;
-	m_pMagic = pMagic;		// enables the scanner
-}
+		m_pMagicReceivedHandler = pHandler;
+
+		m_pMagicPtr = pMagic;
+		m_pMagic = pMagic;		// enables the scanner
+	}
+#endif
+
+
+
 
 unsigned CSerialDevice::AvailableForWrite (void)
 {
@@ -457,7 +474,7 @@ boolean CSerialDevice::Write (u8 uchChar)
 	if (
 #ifdef PRH_MODS
 		0 && 		// disable this code in my version (see comments in public Write() method)
-#endif		
+#endif
 		m_pInterruptSystem != 0)
 	{
 		m_SpinLock.Acquire ();
@@ -493,7 +510,9 @@ boolean CSerialDevice::Write (u8 uchChar)
 
 void CSerialDevice::InterruptHandler (void)
 {
-	boolean bMagicReceived = FALSE;
+	#ifndef PRH_MODS
+		boolean bMagicReceived = FALSE;
+	#endif
 
 	m_SpinLock.Acquire ();
 
@@ -527,20 +546,31 @@ void CSerialDevice::InterruptHandler (void)
 			}
 		}
 
-		if (m_pMagic != 0)
-		{
-			if ((char) (nDR & 0xFF) == *m_pMagicPtr)
+		#ifdef PRH_MODS
+
+			if (m_pReceiveIRQMethod)
 			{
-				if (*++m_pMagicPtr == '\0')
-				{
-					bMagicReceived = TRUE;
-				}
+				(*m_pReceiveIRQMethod)(m_pReceiveIRQObject,(unsigned char) nDR & 0xFF);
 			}
 			else
+
+		#else
+			if (m_pMagic != 0)
 			{
-				m_pMagicPtr = m_pMagic;
+				if ((char) (nDR & 0xFF) == *m_pMagicPtr)
+				{
+					if (*++m_pMagicPtr == '\0')
+					{
+						bMagicReceived = TRUE;
+					}
+				}
+				else
+				{
+					m_pMagicPtr = m_pMagic;
+				}
 			}
-		}
+		#endif
+
 
 		if (((m_nRxInPtr+1) & SERIAL_BUF_MASK) != m_nRxOutPtr)
 		{
@@ -575,10 +605,12 @@ void CSerialDevice::InterruptHandler (void)
 
 	m_SpinLock.Release ();
 
-	if (bMagicReceived)
-	{
-		(*m_pMagicReceivedHandler) ();
-	}
+	#ifndef PRH_MODS
+		if (bMagicReceived)
+		{
+			(*m_pMagicReceivedHandler) ();
+		}
+	#endif
 }
 
 void CSerialDevice::InterruptStub (void *pParam)

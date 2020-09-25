@@ -3,7 +3,7 @@
 //
 // Circle - A C++ bare metal environment for Raspberry Pi
 // Copyright (C) 2014-2019  R. Stange <rsta2@o2online.de>
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -31,7 +31,7 @@
     // I was having problems with buffer overflows.
     // Disabling interrupts caused noise in the audio system with UI.
     // Increasing the size of this buffer helped.
-    
+
     #define SERIAL_BUF_SIZE	    32768			// must be a power of 2
 #else
     #define SERIAL_BUF_SIZE		2048			// must be a power of 2
@@ -78,12 +78,21 @@ public:
 	/// \param nOptions Serial options mask (see serial options)
 	void SetOptions (unsigned nOptions);
 
-	typedef void TMagicReceivedHandler (void);
-	/// \param pMagic String for which is searched in the received data\n
-	/// (must remain valid after return from this method)
-	/// \param pHandler Handler which is called, when the magic string is found
-	/// \note Does only work with interrupt driver.
-	void RegisterMagicReceivedHandler (const char *pMagic, TMagicReceivedHandler *pHandler);
+
+    #ifdef PRH_MODS
+        // The original circle code had some weird "magic" interrupt handler scheme.
+        // How bout just registering a simple effing interupt handler?
+        // sheesh.
+        typedef void ReceiveIRQHandler(void *pObject, unsigned char c);
+        void RegisterReceiveIRQHandler(void *pObject, ReceiveIRQHandler *pHandler);
+    #else
+        typedef void TMagicReceivedHandler (void);
+        /// \param pMagic String for which is searched in the received data\n
+        /// (must remain valid after return from this method)
+        /// \param pHandler Handler which is called, when the magic string is found
+        /// \note Does only work with interrupt driver.
+        void RegisterMagicReceivedHandler (const char *pMagic, TMagicReceivedHandler *pHandler);
+    #endif
 
 protected:
 	/// \return Number of bytes buffer space available for Write()
@@ -130,9 +139,14 @@ private:
 
 	unsigned m_nOptions;
 
-	const char *m_pMagic;
-	const char *m_pMagicPtr;
-	TMagicReceivedHandler *m_pMagicReceivedHandler;
+    #ifdef PRH_MODS
+        void *m_pReceiveIRQObject;
+        ReceiveIRQHandler *m_pReceiveIRQMethod;
+    #else
+        const char *m_pMagic;
+        const char *m_pMagicPtr;
+        TMagicReceivedHandler *m_pMagicReceivedHandler;
+    #endif
 
 	CSpinLock m_SpinLock;
 	CSpinLock m_LineSpinLock;
