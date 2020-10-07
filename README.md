@@ -12,9 +12,35 @@ All code changes within existing Circle source files are bracketed by #ifdef PRH
 
 Changes to Rules.mk *should* be backwards compatible, so this Circle source *should* generally work with Linux and/or MacOS builds, but the changes are only tested in my Windows based develpment environment.
 
+
+Please See
+----------
+
 Please see https://github.com/rsta2/circle for the original Circle source code.
 
 Please see the repository history for a complete list of the changes since the fork.
+
+Please see my **circle-prh** repository at [https://github.com/phorton1/circle-prh](https://github.com/phorton1/circle-prh)
+for my development work based on Circle. I have made a number of what I believe are significant extensions
+to the system, particularly for audio device development, including a port of the Teensy Audio library
+to bare metal rPi.
+
+That general audio development system boasts sub 10ms latency, and with the proper soundcard,
+professional level audio quality.
+
+Based on that, I am in the process of developing a number of projects.  I have made the first
+of those public.
+
+Please see my repository at [https://github.com/phorton1/circle-prh-apps-Looper](https://github.com/phorton1/circle-prh-apps-Looper)
+for the implementation of a multi-track **Audio Looper** which is based on this circle fork, and
+my extensions. You *might* also be interested in my Teensy based (Arduino development environent)
+**[teensyExpression Pedal](https://github.com/phorton1/Arduino-teensyExpression)** which
+connects to, and controls, that Looper (as well as my iPad based guitar rig).
+
+All of this is part of my long term ongoing
+**[rPi bare metal vGuitar rig](https://hackaday.io/project/165696-rpi-bare-metal-vguitar-rig)**
+project at hackaday.
+
 
 
 Development Environment
@@ -53,8 +79,8 @@ I subsequently added some minor extra capabilities to **Rules.mk** that are now 
 
     PLUS3B   ?= 1
         # set this to zero on rPi3 (not plus)
-        
-The **PLUS3B** definition is added to the existing Circle **RASPPI** definition and is passed to the compiler as a define.  This is used by my Circle Bluetooth stack (not included in this initial publication of circle) which needs to send a different HCD file to the rPi onboard BT HCI controller for initialization based on the pi model. You *may* set this appropriatly when you change RASPPI if you want.  You **must** set this appropriately to use my Circle BT stack (later). 
+
+The **PLUS3B** definition is added to the existing Circle **RASPPI** definition and is passed to the compiler as a define.  This is used by my Circle Bluetooth stack (not included in this initial publication of circle) which needs to send a different HCD file to the rPi onboard BT HCI controller for initialization based on the pi model. You *may* set this appropriatly when you change RASPPI if you want.  You **must** set this appropriately to use my Circle BT stack (later).
 
 
     MAKE_LIBS = \
@@ -82,4 +108,3 @@ Credits
 ---------
 
 **Raspberry Pi** is a trademark of the *Raspberry Pi Foundation*.
-
