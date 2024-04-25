@@ -138,7 +138,7 @@ void CLogger::WriteV (const char *pSource, TLogSeverity Severity, const char *pM
 #ifdef PRH_MODS
 	else if (Severity == LogError)
 	{
-		Buffer = "\x1b[30m";
+		Buffer = "\x1b[31m";
 	}
 	else if (Severity == LogWarning)
 	{
