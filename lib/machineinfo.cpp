@@ -58,20 +58,27 @@ static struct
 }
 s_NewInfo[] 
 {
-	{0, MachineModelA,		1},
+	{0, MachineModelA,				1},
 	{1, MachineModelBRelease2MB512,	1},	// can be other revision
-	{2, MachineModelAPlus,		1},
-	{3, MachineModelBPlus,		1},
-	{4, MachineModel2B,		2},
-	{6, MachineModelCM,		1},
-	{8, MachineModel3B,		3},
-	{9, MachineModelZero,		1},
-	{10, MachineModelCM3,		3},
-	{12, MachineModelZeroW,		1},
-	{13, MachineModel3BPlus,	3},
-	{14, MachineModel3APlus,	3},
-	{16, MachineModelCM3Plus,	3},
-	{17, MachineModel4B,		4}
+	{2, MachineModelAPlus,			1},
+	{3, MachineModelBPlus,			1},
+	{4, MachineModel2B,				2},
+	{6, MachineModelCM,				1},
+	{8, MachineModel3B,				3},
+	{9, MachineModelZero,			1},
+	{10, MachineModelCM3,			3},
+	{12, MachineModelZeroW,			1},
+	{13, MachineModel3BPlus,		3},
+	{14, MachineModel3APlus,		3},
+	{16, MachineModelCM3Plus,		3},
+	{17, MachineModel4B,			4},
+
+	// prh added
+	{18, MachineModelZero2W,		3},
+	{19, MachineModel400,			4},
+	{20, MachineModelCM4,			4},
+	{21, MachineModelCM4S,			4},
+	{23, MachineModel5,				5}
 };
 
 static const char *s_MachineName[] =		// must match TMachineModel
@@ -84,6 +91,10 @@ static const char *s_MachineName[] =		// must match TMachineModel
 	"Raspberry Pi Model B+",
 	"Raspberry Pi Zero",
 	"Raspberry Pi Zero W",
+
+	// prh added
+	"Raspberry Pi Zero 2 W",
+
 	"Raspberry Pi 2 Model B",
 	"Raspberry Pi 3 Model B",
 	"Raspberry Pi 3 Model A+",
@@ -92,7 +103,15 @@ static const char *s_MachineName[] =		// must match TMachineModel
 	"Compute Module 3",
 	"Compute Module 3+",
 	"Raspberry Pi 4 Model B",
+
+	// prh added
+	"Raspberry Pi 400",
+	"Compute Module 4",
+	"Compute Module 4S",
+	"Raspberry Pi 5",
+
 	"Unknown"
+
 };
 
 static const char *s_SoCName[] =		// must match TSoCType
@@ -101,6 +120,10 @@ static const char *s_SoCName[] =		// must match TSoCType
 	"BCM2836",
 	"BCM2837",
 	"BCM2711",
+
+	// prh added
+	"BCM2712",
+
 	"Unknown"
 };
 
@@ -114,6 +137,10 @@ static unsigned s_ActLEDInfo[] =		// must match TMachineModel
 	47,				// B+
 	47 | ACTLED_ACTIVE_LOW,		// Zero
 	47 | ACTLED_ACTIVE_LOW,		// Zero W
+
+	// prh added
+	29 | ACTLED_ACTIVE_LOW,		// Zero 2 W
+
 	47,				// 2B
 	0 | ACTLED_VIRTUAL_PIN,		// 3B
 	29,				// 3A+
@@ -122,6 +149,12 @@ static unsigned s_ActLEDInfo[] =		// must match TMachineModel
 	0 | ACTLED_VIRTUAL_PIN,		// CM3
 	0 | ACTLED_VIRTUAL_PIN,		// CM3+
 	42,				// 4B
+
+	// prh added
+	42,				// 400
+	42,				// CM4
+	0 | ACTLED_VIRTUAL_PIN,		// CM4S
+	9 | ACTLED_ACTIVE_LOW,		// 5	 (at GPIO chip #2)
 
 	ACTLED_UNKNOWN			// Unknown
 };

@@ -35,6 +35,10 @@ enum TMachineModel
 	MachineModelBPlus,
 	MachineModelZero,
 	MachineModelZeroW,
+
+	// prh added
+	MachineModelZero2W,
+
 	MachineModel2B,
 	MachineModel3B,
 	MachineModel3APlus,
@@ -43,6 +47,13 @@ enum TMachineModel
 	MachineModelCM3,
 	MachineModelCM3Plus,
 	MachineModel4B,
+
+	// prh added
+	MachineModel400,
+	MachineModelCM4,
+	MachineModelCM4S,
+	MachineModel5,
+
 	MachineModelUnknown
 };
 
@@ -52,6 +63,10 @@ enum TSoCType
 	SoCTypeBCM2836,
 	SoCTypeBCM2837,
 	SoCTypeBCM2711,
+
+	// prh added
+	SoCTypeBCM2712,
+
 	SoCTypeUnknown
 };
 
