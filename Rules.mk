@@ -24,8 +24,10 @@ CIRCLEHOME ?= ..
 -include $(CIRCLEHOME)/Config2.mk	# is not overwritten by "configure"
 
 # prh - personal defines and includes
+# 2025-02-05 added -DLOOPER3 for TE3 build of Looper
+#  -DLOOPER3
 
-DEFINE += -DPRH_MODS -DPLUS3B
+DEFINE += -DPRH_MODS -DPLUS3B -DLOOPER3
 INCLUDE	+=  -I $(CIRCLEHOME)/_prh
 
 # prh - changed RASPI from 1 and PREFIX from arm-eabi-
